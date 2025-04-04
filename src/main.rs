@@ -75,3 +75,5 @@ fn rocket() -> _ {
         // .mount("/", routes![index, stylesheet])
         .mount("/station", routes![station])
 }
+
+// sobe
