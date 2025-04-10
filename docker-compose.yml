@@ -1,0 +1,14 @@
+services:
+  web-radio:
+    build: .
+    container_name: web-radio
+    ports:
+      - "6969:6969"
+    environment:
+      - PULSE_SERVER=unix:/mnt/wslg/PulseServer
+      - ROCKET_ADDRESS=0.0.0.0
+      - ROCKET_PORT=6969
+    # volumes:
+    #   - .:/app
+    stdin_open: true
+    tty: true
