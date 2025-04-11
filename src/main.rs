@@ -31,7 +31,7 @@ fn stylesheet() -> RawCss<&'static [u8]> {
 
 #[get("/get_stations")]
 fn get_stations() -> &'static str {
-    "Rentorna a lista de estacoes ativas no momento!" 
+    "Retorna a lista de estacoes ativas no momento!" 
 }
 
 #[launch]
