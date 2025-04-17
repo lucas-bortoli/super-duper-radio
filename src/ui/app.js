@@ -1,3 +1,20 @@
+document.querySelectorAll("nav span").forEach((tab) => {
+    tab.addEventListener("click", () => {
+        const selected = tab.dataset.tab;
+
+        // troca a aba ativa
+        document.querySelectorAll("nav span").forEach((el) => {
+            el.classList.remove("active");
+        });
+        tab.classList.add("active");
+
+        // mostra o conteúdo da aba clicada
+        document.querySelectorAll(".tab-content").forEach((el) => {
+            el.hidden = true;
+        });
+        document.getElementById(`${selected}-tab`).hidden = false;
+    });
+});
 
 const stations = [
     ["Diamond City Radio", "/station/diamondcity"],
