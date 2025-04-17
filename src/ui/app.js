@@ -109,3 +109,28 @@ player.addEventListener("play", () => {
     audioContext.resume();
     requestAnimationFrame(drawWaveform);
 });
+
+//Inventory tab
+const inventoryItems = [
+    ["Stimpak", () => alert("Usou um Stimpak!")],
+    ["RadAway", () => alert("Usou RadAway!")],
+    ["Nuka-Cola", () => alert("Glug glug 🍹!")],
+    ["Chave da Vault 111", null],
+];
+
+const inventoryList = document.querySelector(".inventory-list");
+
+for (const [item, action] of inventoryItems) {
+    const el = document.createElement("li");
+    el.innerText = item;
+    if (action !== null) {
+        el.onclick = () => {
+            inventoryList.querySelector(".active")?.classList.remove("active");
+            el.classList.add("active");
+            action();
+        };
+    } else {
+        el.setAttribute("aria-disabled", true);
+    }
+    inventoryList.appendChild(el);
+}
