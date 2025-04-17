@@ -29,6 +29,11 @@ fn stylesheet() -> RawCss<&'static [u8]> {
     return RawCss(include_bytes!("ui/ui.css"));
 }
 
+#[get("/app.js")]
+fn javascript() -> (ContentType, &'static [u8]) {
+    (ContentType::JavaScript, include_bytes!("ui/app.js"))
+}
+
 #[get("/get_stations")]
 fn get_stations() -> &'static str {
     "Retorna a lista de estacoes ativas no momento!" 
@@ -47,7 +52,7 @@ fn rocket() -> _ {
     let station ="teste";
 
     rocket::build()
-        .mount("/", routes![index, stylesheet])     
+        .mount("/", routes![index, stylesheet, javascript])     
         .mount("/", routes![])
 }
 
