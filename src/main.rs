@@ -34,6 +34,11 @@ fn javascript() -> (ContentType, &'static [u8]) {
     (ContentType::JavaScript, include_bytes!("ui/app.js"))
 }
 
+#[get("/favicon.ico")]
+fn favicon() -> (ContentType, &'static [u8]) {
+    (ContentType::Icon, include_bytes!("ui/favicon.ico"))
+}
+
 #[get("/get_stations")]
 fn get_stations() -> &'static str {
     "Retorna a lista de estacoes ativas no momento!" 
@@ -52,7 +57,7 @@ fn rocket() -> _ {
     let station ="teste";
 
     rocket::build()
-        .mount("/", routes![index, stylesheet, javascript])     
+        .mount("/", routes![index, stylesheet, javascript, favicon])     
         .mount("/", routes![])
 }
 
