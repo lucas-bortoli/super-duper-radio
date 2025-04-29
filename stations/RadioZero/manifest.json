@@ -1,0 +1,24 @@
+{
+  "title": "NoCopyrightSounds",
+  "description": "Seleções da NCS. A rádio de referência e exemplo para implementação do software.",
+  "tracks": [
+    {
+      "source": "yanvince_feel_it.mp3",
+      "title": "feel it",
+      "artist": "yanvince",
+      "album_art": "yanvince_0.jpg"
+    },
+    {
+      "source": "yanvince_realise.mp3",
+      "title": "realise",
+      "artist": "yanvince",
+      "album_art": "yanvince_0.jpg"
+    },
+    {
+      "source": "yanvince_think_about.mp3",
+      "title": "think about",
+      "artist": "yanvince",
+      "album_art": "yanvince_0.jpg"
+    }
+  ]
+}

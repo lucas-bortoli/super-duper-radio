@@ -1,7 +1,14 @@
 /target
 /diamond_city_radio
 
-*.mp3
-*.wav
-*.ogg
-*.opus
+stations/*.mp3
+stations/*.wav
+stations/*.ogg
+stations/*.opus
+stations/*.jpg
+stations/*.png
+stations/*.json
+
+!stations/RadioZero/*.mp3
+!stations/RadioZero/*.jpg
+!stations/RadioZero/*.json
