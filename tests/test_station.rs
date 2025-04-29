@@ -4,8 +4,8 @@ mod test;
 pub mod test_station {
     use web_radio::objects::station::station::Station;
     use web_radio::objects::station::station_state::MockStationState;
-    use web_radio::objects::subscriber::Subscriber;    
-    
+    use web_radio::objects::subscriber::Subscriber;
+
     #[test]
     fn test_station_creation() {
         let station = get_station_test();
@@ -20,7 +20,7 @@ pub mod test_station {
     fn test_add_subscriber() {
         let mut station = get_station_test();
 
-        let subscriber = Subscriber{};
+        let subscriber = Subscriber {};
         station.add_subscriber(subscriber.clone());
 
         assert_eq!(station._subscribers.len(), 1);
@@ -31,8 +31,7 @@ pub mod test_station {
     fn test_remove_subscriber() {
         let mut station = get_station_test();
 
-
-        let subscriber = Subscriber{};
+        let subscriber = Subscriber {};
         station.add_subscriber(subscriber.clone());
         station.remove_subscriber(&subscriber);
 
@@ -70,7 +69,7 @@ pub mod test_station {
     //         mock_state,
     //     );
 
-    //     // Assuming the test_path/metadata.json contains mock track data
+    //     // Assuming the test_path/manifest.json contains mock track data
     //     assert!(station.tracks.is_empty()); // Adjust based on actual test setup
     // }
 

@@ -2,7 +2,9 @@ use std::{fs::File, path};
 
 use rocket::serde;
 
-use crate::objects::{station::station_state::StationState, subscriber::Subscriber, track::track::Track};
+use crate::objects::{
+    station::station_state::StationState, subscriber::Subscriber, track::track::Track,
+};
 
 pub struct Station {
     pub name: String,
@@ -13,9 +15,13 @@ pub struct Station {
     pub tracks: Vec<Track>,
 }
 
-
 impl Station {
-    pub fn new(name: String, path: String, frequency: f32, _state: Box<dyn StationState>) -> Station {
+    pub fn new(
+        name: String,
+        path: String,
+        frequency: f32,
+        _state: Box<dyn StationState>,
+    ) -> Station {
         let mut station = Station {
             name,
             _subscribers: Vec::new(),
@@ -44,7 +50,7 @@ impl Station {
 
     pub fn get_music_files(&self) -> Vec<String> {
         let mut music_vec = Vec::new();
-        
+
         if let Ok(entries) = std::fs::read_dir(&self.path) {
             for entry in entries.flatten() {
                 if let Ok(file_type) = entry.file_type() {
@@ -56,20 +62,21 @@ impl Station {
                 }
             }
         }
-        
+
         music_vec
     }
 
     fn get_music_vec(&self) -> Vec<Track> {
-        let binding = self.path.clone() + "metadata.json";
-        let metadata_path = path::Path::new(&binding);
+        let binding = self.path.clone() + "manifest.json";
+        let manifest_path = path::Path::new(&binding);
 
-        let metadata_file: Vec<Track> = serde_json::from_reader(File::open(metadata_path).unwrap()).unwrap();
+        let manifest_file: Vec<Track> =
+            serde_json::from_reader(File::open(manifest_path).unwrap()).unwrap();
 
-        metadata_file   
+        manifest_file
     }
 
-    fn fill_tracks(&mut self){
+    fn fill_tracks(&mut self) {
         self.tracks = self.get_music_vec();
     }
 
@@ -81,5 +88,4 @@ impl Station {
     pub fn play(&self) {
         // self._state.play();
     }
-
 }
