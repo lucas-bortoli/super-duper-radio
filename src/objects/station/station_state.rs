@@ -51,31 +51,6 @@ impl StationState for PlayingState {
     fn name(&self) -> &'static str { "Playing" }
 }
 
-pub struct PlayingSilentlyState;
-impl PlayingSilentlyState {
-    pub fn new() -> Self { PlayingSilentlyState }
-}
-impl StationState for PlayingSilentlyState {
-    fn play(self: Box<Self>, station: &mut Station) -> Box<dyn StationState> {
-        Box::new(PlayingState::new())
-    }
-    fn stop(self: Box<Self>, station: &mut Station) -> Box<dyn StationState> {
-        station.stop_playback();
-        Box::new(DownState::new())
-    }
-    fn next(self: Box<Self>, station: &mut Station) -> Box<dyn StationState> {
-        station.save_snapshot();
-        if let Ok(next_track) = station.iterator.get_next() {
-            station.current_track = next_track;
-            Box::new(PlayingSilentlyState::new())
-        } else {
-            station.stop_playback();
-            Box::new(DownState::new())
-        }
-    }
-    fn name(&self) -> &'static str { "PlayingSilently" }
-}
-
 pub struct SwitchingState;
 impl SwitchingState {
     pub fn new() -> Self { SwitchingState }

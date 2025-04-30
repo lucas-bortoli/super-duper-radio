@@ -1,14 +1,13 @@
 use std::{fs::File, path::Path};
 use rocket::time::OffsetDateTime;
 use serde_json;
+use std::sync::mpsc::Sender;
+
 
 use crate::objects::{
-    station::station_state::StationState,
-    station::station_state::DownState,
-    station::station_snapshot::StationSnapshot,
+    station::{station_snapshot::StationSnapshot, station_state::{DownState, StationState}},
     subscriber::Subscriber,
-    track::track::Track,
-    track::track_iterator::TrackIterator,
+    track::{self, track::Track, track_iterator::TrackIterator},
 };
 
 
@@ -21,6 +20,7 @@ pub struct Station {
     pub snapshots: Vec<StationSnapshot>,
     pub current_track: Track,
     pub iterator: TrackIterator,
+    pub track_tx: Sender<Track>,
 }
 
 
@@ -30,6 +30,7 @@ impl Station {
         path: String,
         frequency: f32,
         seed: u64,
+        track_tx: Sender<Track>,
     ) -> Station {
         let metadata_path = Path::new(&path).join("metadata.json");
         let file = File::open(&metadata_path)
@@ -39,6 +40,7 @@ impl Station {
 
         let iterator = TrackIterator::new(tracks.clone(), seed);
         let current_track = iterator.get_current().clone();
+        let _ = track_tx.send(current_track.clone());
 
         Station {
             name,
@@ -49,19 +51,8 @@ impl Station {
             snapshots: Vec::new(),
             current_track,
             iterator,
+            track_tx
         }
-    }
-
-    pub fn add_subscriber(&mut self, subscriber: Subscriber) {
-        self.subscribers.push(subscriber);
-    }
-
-    pub fn remove_subscriber(&mut self, subscriber: &Subscriber) {
-        self.subscribers.retain(|s| s != subscriber);
-    }
-
-    pub fn change_state(&mut self, new_state: Box<dyn StationState>) {
-        self.state = new_state;
     }
 
     pub fn play(&mut self) {
@@ -80,6 +71,8 @@ impl Station {
         let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
         let new_state = old.next(self);
         self.state = new_state;
+
+        let _ = self.track_tx.send(self.current_track.clone());
     }
 
     pub fn save_snapshot(&mut self) {
