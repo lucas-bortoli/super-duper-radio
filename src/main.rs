@@ -1,4 +1,5 @@
 use std::{collections::HashMap, path::PathBuf};
+use std::sync::mpsc::channel;
 
 use bytes::Bytes;
 use cytoplasm::cytoplasm::Cytoplasm;
@@ -7,6 +8,7 @@ use rocket::{
     http::ContentType,
     response::{content::RawHtml, stream::ByteStream},
 };
+use web_radio::objects::track::track::Track;
 
 pub mod cytoplasm;
 pub mod input_decoder;
@@ -36,12 +38,14 @@ fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStre
 
 #[launch]
 fn rocket() -> _ {
+    let (track_tx, track_rx) = channel::<Track>();
     let mut stations: StationMap = HashMap::new();
     stations.insert(
         "diamondcityradio".to_string(),
         Cytoplasm::new(
             PathBuf::from("./DiamondCityRadio"),
             &[OutputCodec::Mp3_64kbps],
+            track_rx,
         ),
     );
 
