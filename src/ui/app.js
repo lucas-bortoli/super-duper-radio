@@ -110,11 +110,20 @@ player.addEventListener("play", () => {
     requestAnimationFrame(drawWaveform);
 });
 
+//background changer
+
+function setBackground(image) {
+    document.body.style.backgroundImage = `url('${image}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundRepeat = "no-repeat";
+}
+
 //Inventory tab
 const inventoryItems = [
-    ["Stimpak", () => alert("Usou um Stimpak!")],
-    ["RadAway", () => alert("Usou RadAway!")],
-    ["Nuka-Cola", () => alert("Glug glug 🍹!")],
+    ["VaultLady", () => setBackground("./backgrounds/ladyfalloutpipboywallpaper.jpeg")],
+    ["VaultBoy", () => setBackground("./backgrounds/wallpaperpipboy.jpeg")],
+    ["Nuka-Cola", () => setBackground("./backgrounds/nukacolaladywallpaper.jpeg")],
     ["Chave da Vault 111", null],
 ];
 

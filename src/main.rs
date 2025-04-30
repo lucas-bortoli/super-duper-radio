@@ -7,6 +7,8 @@ use rocket::{
     tokio::sync::broadcast,
 };
 
+use rocket::fs::{FileServer, relative};
+
 use std::{
     fs::File,
     io::{Read, Seek, SeekFrom},
@@ -57,7 +59,8 @@ fn rocket() -> _ {
     let station ="teste";
 
     rocket::build()
-        .mount("/", routes![index, stylesheet, javascript, favicon])     
+        .mount("/", routes![index, stylesheet, javascript, favicon])
+        .mount("/backgrounds", FileServer::from(relative!("src/ui/backgrounds")))     
         .mount("/", routes![])
 }
 
