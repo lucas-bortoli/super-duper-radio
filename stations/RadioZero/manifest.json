@@ -9,17 +9,17 @@
       "album_art": "yanvince_0.jpg",
       "narration_before": [
         {
-          "source": "narrations/yanvince_feel_it_B001.mp3",
+          "source": "narrations/yanvince_feel_it_B001.wav",
           "transcript": "So, uuh, here's Feel It, by Yanvince."
         },
         {
-          "source": "narrations/yanvince_feel_it_B002.mp3",
+          "source": "narrations/yanvince_feel_it_B002.wav",
           "transcript": "Yanvince again."
         }
       ],
       "narration_after": [
         {
-          "source": "narrations/yanvince_feel_it_A001.mp3",
+          "source": "narrations/yanvince_feel_it_A001.wav",
           "transcript": "Another good one by Yanvince."
         }
       ]
@@ -31,13 +31,13 @@
       "album_art": "yanvince_0.jpg",
       "narration_before": [
         {
-          "source": "narrations/yanvince_realise_B001.mp3",
+          "source": "narrations/yanvince_realise_B001.wav",
           "transcript": "Now, let's listen to Realise, by Yanvince."
         }
       ],
       "narration_after": [
         {
-          "source": "narrations/yanvince_realise_A001.mp3",
+          "source": "narrations/yanvince_realise_A001.wav",
           "transcript": "That was Realise by Yanvince."
         }
       ]
@@ -49,13 +49,13 @@
       "album_art": "yanvince_0.jpg",
       "narration_before": [
         {
-          "source": "narrations/yanvince_think_about_B001.mp3",
+          "source": "narrations/yanvince_think_about_B001.wav",
           "transcript": "Next up, Think About by Yanvince."
         }
       ],
       "narration_after": [
         {
-          "source": "narrations/yanvince_think_about_A001.mp3",
+          "source": "narrations/yanvince_think_about_A001.wav",
           "transcript": "That was Think About by Yanvince."
         }
       ]
