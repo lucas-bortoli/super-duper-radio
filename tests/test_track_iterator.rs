@@ -1,79 +1,46 @@
-#[cfg(test)]
-pub mod tests_track_iterator {
-    use web_radio::objects::station::station::Station;
-    use web_radio::objects::station::station_state::MockStationState;
-    use web_radio::objects::track::track::{Narration, Track};
-    use web_radio::objects::track::track_iterator::TrackIterator;
+use web_radio::objects::track::track::Track;
+use web_radio::objects::track::track_iterator::TrackIterator;
 
-    pub fn run_test() {
-        test_track_iterator_initialization();
-        //test_track_iterator_go_next();
-        test_track_iterator_has_more();
-    }
+fn mock_track(id: usize) -> Track {
+    Track::new(
+        format!("Title {}", id),
+        format!("Artist {}", id),
+        "Album".to_string(),
+        200,
+        "wav".to_string(),
+        format!("file{}.wav", id),
+        vec![],
+        vec![]
+    )
+}
 
-    #[test]
-    fn test_track_iterator_initialization() {
-        let station = get_station_test();
+#[test]
+fn iterator_initialization_and_current() {
+    let tracks = vec![ mock_track(1), mock_track(2), mock_track(3) ];
+    let iter = TrackIterator::new(tracks.clone(), 1234);
+    // get_current nunca será vazio
+    assert!(!iter.get_current().title.is_empty());
+    assert!(!iter.get_current().source.is_empty());
+}
 
-        let iterator = TrackIterator::new(station.tracks.clone(), 42);
+#[test]
+fn iterator_has_more() {
+    let tracks = vec![ mock_track(1) ];
+    let iter = TrackIterator::new(tracks.clone(), 42);
+    // só 1 item => has_more deve ser false
+    assert!(!iter.has_more());
+}
 
-        assert_ne!(iterator.get_current().title, "");
-        assert_ne!(iterator.get_current().file_format, "");
-        assert_ne!(iterator.get_current().source, "");
-    }
-
-    // #[test]
-    // fn test_track_iterator_go_next() {
-    //     let tracks = vec![
-    //         mock_track()
-    //     ];
-
-    //     let mut iterator = TrackIterator::new(tracks.clone(), 42);
-
-    //     iterator.go_next();
-    //     assert_ne!(iterator.get_current().title, "");
-    // }
-
-    #[test]
-    fn test_track_iterator_has_more() {
-        let tracks = vec![mock_track()];
-
-        let iterator = TrackIterator::new(tracks.clone(), 42);
-
-        assert!(!iterator.has_more()); // Apenas um item, não há mais
-    }
-
-    fn get_station_test() -> Station {
-        let station_state = MockStationState::new(); // Assuming StationState has a `new` method
-        let station = Station::new(
-            "Diamond City Radio".to_owned(),
-            "./diamond_city_radio/".to_owned(),
-            98.9,
-            Box::new(station_state),
-        );
-        station
-    }
-
-    fn mock_track() -> Track {
-        Track::new(
-            "Mocked Title".to_string(),
-            "Mocked Artist".to_string(),
-            "Mocked Album".to_string(),
-            300, // duração em segundos (5 minutos)
-            "mp3".to_string(),
-            "mocked_source.mp3".to_string(),
-            vec![Narration {
-                title: "Mocked After Narration".to_string(),
-                duration: 30, // duração em segundos
-                file_format: "mp3".to_string(),
-                source: "mocked_after_narration.mp3".to_string(),
-            }],
-            vec![Narration {
-                title: "Mocked Before Narration".to_string(),
-                duration: 20, // duração em segundos
-                file_format: "mp3".to_string(),
-                source: "mocked_before_narration.mp3".to_string(),
-            }],
-        )
-    }
+#[test]
+fn iterator_go_next_exhausts_queue() {
+    let mut tracks = vec![ mock_track(1), mock_track(2) ];
+    let mut iter = TrackIterator::new(tracks.clone(), 999);
+    let first = iter.get_current().clone();
+    // after first, queue len == original-1
+    assert!(iter.has_more());
+    iter.go_next().expect("deve ter next");
+    let second = iter.get_current().clone();
+    assert_ne!(first.title, second.title);
+    // agora sem mais
+    assert!(!iter.has_more());
 }

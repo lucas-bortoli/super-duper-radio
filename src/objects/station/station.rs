@@ -1,85 +1,112 @@
-use std::{fs::File, path};
+use std::{fs::File, path::Path};
+use rocket::time::OffsetDateTime;
+use serde_json;
+use std::sync::mpsc::Sender;
 
-use rocket::serde;
 
-use crate::objects::{station::station_state::StationState, subscriber::Subscriber, track::track::Track};
+use crate::objects::{
+    station::{station_snapshot::StationSnapshot, station_state::{DownState, StationState}},
+    subscriber::Subscriber,
+    track::{self, track::Track, track_iterator::TrackIterator},
+};
+
 
 pub struct Station {
     pub name: String,
-    pub _subscribers: Vec<Subscriber>,
+    pub subscribers: Vec<Subscriber>,
     pub path: String,
     pub frequency: f32,
-    pub _state: Box<dyn StationState>,
-    pub tracks: Vec<Track>,
+    pub state: Box<dyn StationState>,
+    pub snapshots: Vec<StationSnapshot>,
+    pub current_track: Track,
+    pub iterator: TrackIterator,
+    pub track_tx: Sender<Track>,
 }
 
 
 impl Station {
-    pub fn new(name: String, path: String, frequency: f32, _state: Box<dyn StationState>) -> Station {
-        let mut station = Station {
+    pub fn new(
+        name: String,
+        path: String,
+        frequency: f32,
+        seed: u64,
+        track_tx: Sender<Track>,
+    ) -> Station {
+        let metadata_path = Path::new(&path).join("metadata.json");
+        let file = File::open(&metadata_path)
+            .expect("Station: Falha ao abrir metadata.json");
+        let tracks: Vec<Track> = serde_json::from_reader(file)
+            .expect("Station: JSON inválido");
+
+        let iterator = TrackIterator::new(tracks.clone(), seed);
+        let current_track = iterator.get_current().clone();
+        let _ = track_tx.send(current_track.clone());
+
+        Station {
             name,
-            _subscribers: Vec::new(),
+            subscribers: Vec::new(),
             path,
             frequency,
-            _state,
-            tracks: Vec::new(),
-        };
-
-        station.fill_tracks();
-
-        station
-    }
-
-    pub fn add_subscriber(&mut self, subscriber: Subscriber) {
-        self._subscribers.push(subscriber);
-    }
-
-    pub fn remove_subscriber(&mut self, subscriber: &Subscriber) {
-        self._subscribers.retain(|s| s != subscriber);
-    }
-
-    pub fn change_state(&mut self, state: Box<dyn StationState>) {
-        self._state = state;
-    }
-
-    pub fn get_music_files(&self) -> Vec<String> {
-        let mut music_vec = Vec::new();
-        
-        if let Ok(entries) = std::fs::read_dir(&self.path) {
-            for entry in entries.flatten() {
-                if let Ok(file_type) = entry.file_type() {
-                    if file_type.is_file() {
-                        if let Some(file_name) = entry.path().to_str() {
-                            music_vec.push(file_name.to_string());
-                        }
-                    }
-                }
-            }
+            state: Box::new(DownState::new()),
+            snapshots: Vec::new(),
+            current_track,
+            iterator,
+            track_tx
         }
-        
-        music_vec
     }
 
-    fn get_music_vec(&self) -> Vec<Track> {
-        let binding = self.path.clone() + "metadata.json";
-        let metadata_path = path::Path::new(&binding);
-
-        let metadata_file: Vec<Track> = serde_json::from_reader(File::open(metadata_path).unwrap()).unwrap();
-
-        metadata_file   
+    pub fn play(&mut self) {
+        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let new_state = old.play(self);
+        self.state = new_state;
     }
 
-    fn fill_tracks(&mut self){
-        self.tracks = self.get_music_vec();
+    pub fn stop(&mut self) {
+        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let new_state = old.stop(self);
+        self.state = new_state;
     }
 
-    // Funções que acredito que vão estar no state
-    pub fn go_next(&self) {
-        // self._state.go_next();
+    pub fn next(&mut self) {
+        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let new_state = old.next(self);
+        self.state = new_state;
+
+        let _ = self.track_tx.send(self.current_track.clone());
     }
 
-    pub fn play(&self) {
-        // self._state.play();
+    pub fn save_snapshot(&mut self) {
+        let snapshot = StationSnapshot {
+            name: self.name.clone(),
+            current_track: self.current_track.clone(),
+            subscribers: self.subscribers.clone(),
+            created_on: OffsetDateTime::now_utc().date(),
+        };
+        self.snapshots.push(snapshot);
+    }
+
+
+    /// Retorna o nome da estação somente para fins de debug
+    pub fn state_name(&self) -> &str {
+        self.state.name()
+    }
+
+    /// Notifica para o fluxo de áudio que a faixa mudou
+    pub fn notify_track_change(&self) {
+        // TODO: implementar integração com Cytoplasm para reload de arquivo
+        println!("Station[{}]: track mudou para {}", self.name, self.current_track.title);
+    }
+
+    /// Inicia playback da faixa atual (State Down -> Playing)
+    pub fn start_playback(&self) {
+        // TODO: integrar com Cytoplasm
+        println!("Station[{}]: iniciando playback de {}", self.name, self.current_track.title);
+    }
+
+    /// Para o playback (State Playing -> Down)
+    pub fn stop_playback(&self) {
+        // TODO: integrar com Cytoplasm
+        println!("Station[{}]: parou playback", self.name);
     }
 
 }
