@@ -11,8 +11,13 @@ document.querySelectorAll("nav span").forEach((tab) => {
         // mostra o conteúdo da aba clicada
         document.querySelectorAll(".tab-content").forEach((el) => {
             el.hidden = true;
+            el.classList.remove("active");
         });
-        document.getElementById(`${selected}-tab`).hidden = false;
+        
+        const selectedTab = document.getElementById(`${selected}-tab`);
+        selectedTab.hidden = false;
+        selectedTab.classList.add("active");
+        
     });
 });
 
