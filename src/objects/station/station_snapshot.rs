@@ -1,10 +1,11 @@
-use rocket::time::Date;
+use rocket::time:: OffsetDateTime;
 
 use crate::objects::{subscriber::Subscriber, track::track::Track};
 
-struct StationSnapshot {
-    name: String,
-    current_track: Track,
-    subscribers: Vec<Subscriber>,
-    created_on: Date,
+pub struct StationSnapshot {
+    pub name: String,
+    pub current_track: Track,
+    pub subscribers: Vec<Subscriber>,
+    pub created_on: OffsetDateTime,
+    pub duration_secs: f64, 
 }

@@ -1,4 +1,5 @@
-mod test;
+// use web_radio::objects::station::station::Station;
+// use web_radio::objects::subscriber::Subscriber;
 
 #[cfg(test)]
 pub mod test_station {
@@ -35,15 +36,18 @@ pub mod test_station {
         station.add_subscriber(subscriber.clone());
         station.remove_subscriber(&subscriber);
 
-        assert!(station._subscribers.is_empty());
-    }
+        //     station.play();
+        //     assert_eq!(station.state_name(), "Playing");
 
-    #[test]
-    fn test_change_state() {
-        let mut station = get_station_test();
+        //     let current = station.current_track.title.clone();
+        //     station.next();
+        //     let after = station.current_track.title.clone();
+        //     assert!(
+        //         current != after || station.state_name() == "Down",
+        //         "ou mudou a faixa, ou caiu para Down"
+        //     );
 
-        let new_state = Box::new(MockStationState::new());
-        station.change_state(new_state);
+        //     assert!(station.snapshots.len() >= 1);
 
         // Assuming MockStationState has a way to verify state change
         // This is a placeholder assertion

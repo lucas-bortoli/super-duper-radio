@@ -4,7 +4,10 @@ use std::{
     sync::{Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
+    sync::mpsc::Receiver,
 };
+
+use web_radio::objects::track::track::Track;
 
 use crate::{
     input_decoder::input_audio_file::{self, AudioPacket},
@@ -22,12 +25,12 @@ pub struct Cytoplasm {
 }
 
 impl Cytoplasm {
-    pub fn new(station_directory: PathBuf, output_codecs: &[OutputCodec]) -> Cytoplasm {
+    pub fn new(station_directory: PathBuf, output_codecs: &[OutputCodec], track_tx: Receiver<Track>) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
-        Self::init_decoder_thread(station_directory.clone(), buffer.clone());
+        Self::init_decoder_thread(station_directory.clone(), buffer.clone(), track_tx);
         Self::init_encoder_thread(encoders.clone(), buffer.clone());
 
         let output_streams_arc = Arc::new(output_streams);
@@ -67,43 +70,36 @@ impl Cytoplasm {
 
     /// inicia a thread responsável por decodificar arquivos de áudio
     /// ela carrega trilhas conforme definidas e enfileira pacotes no buffer compartilhado
-    fn init_decoder_thread(station_directory: PathBuf, buffer: Arc<Mutex<VecDeque<AudioPacket>>>) {
-        thread::spawn(move || loop {
-            let next_track = station_directory.join("bicameral_mind.mp3");
-
-            eprintln!(
-                "cytoplasm/d: abrindo arquivo: {}",
-                next_track.to_str().unwrap()
-            );
-
-            let file =
-                input_audio_file::open_input_file_strategy(next_track.to_str().unwrap().to_owned());
-            for packet in file {
-                let mut buf_guard = buffer.lock().unwrap();
-                if buf_guard.len() >= SETPOINT_HIGH {
-                    // eprintln!("cytoplasm/d: Backpressure! Pausando encoder...");
-
-                    drop(buf_guard); // liberar mutex imediatamente
-
-                    // fazer porra nenhuma até o buffer estar quase vazio
-                    'backpressure: loop {
-                        thread::sleep(FUCKALL_DURATION);
-                        let buf_guard = buffer.lock().unwrap();
-                        if buf_guard.len() <= SETPOINT_LOW {
-                            // eprintln!("cytoplasm/d: Backpressure acabou!");
-                            break 'backpressure;
+    fn init_decoder_thread(
+        station_directory: PathBuf,
+        buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
+        track_rx: Receiver<Track>,
+    ) {
+        thread::spawn(move || {
+            while let Ok(track) = track_rx.recv() {
+                let file_path = station_directory.join(&track.source);
+                eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path.display());
+    
+                let mut file = input_audio_file::open_input_file_strategy(
+                    file_path.to_string_lossy().into_owned(),
+                );
+                for packet in &mut file {
+                    let mut buf = buffer.lock().unwrap();
+                    if buf.len() >= SETPOINT_HIGH {
+                        drop(buf);
+                        while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                            thread::sleep(FUCKALL_DURATION);
                         }
+                        buffer.lock().unwrap().push_back(packet);
+                    } else {
+                        buf.push_back(packet);
                     }
-
-                    // finalmente continuar enfileirando pacotes
-                    buffer.lock().unwrap().push_back(packet);
-                } else {
-                    // enfileirar pacote imediatamente; ainda cabe no buffer
-                    buf_guard.push_back(packet);
                 }
             }
+            eprintln!("cytoplasm/d: canal de tracks fechado");
         });
     }
+    
 
     /// inicia a thread que consome pacotes do buffer, envia para os encoders e mantém o timing de reprodução
     fn init_encoder_thread(
