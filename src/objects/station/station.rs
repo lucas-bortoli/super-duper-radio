@@ -21,6 +21,7 @@ pub struct Station {
     pub current_track: Track,
     pub iterator: TrackIterator,
     pub track_tx: Sender<Track>,
+    last_snapshot_time: OffsetDateTime,
 }
 
 
@@ -41,6 +42,7 @@ impl Station {
         let iterator = TrackIterator::new(tracks.clone(), seed);
         let current_track = iterator.get_current().clone();
         let _ = track_tx.send(current_track.clone());
+        let now = OffsetDateTime::now_utc();
 
         Station {
             name,
@@ -51,7 +53,8 @@ impl Station {
             snapshots: Vec::new(),
             current_track,
             iterator,
-            track_tx
+            track_tx,
+            last_snapshot_time: now, 
         }
     }
 
@@ -76,13 +79,20 @@ impl Station {
     }
 
     pub fn save_snapshot(&mut self) {
+        let now = OffsetDateTime::now_utc();
+        let delta = now - self.last_snapshot_time;
+        let duration_secs = delta.whole_seconds() as f64;
+
         let snapshot = StationSnapshot {
             name: self.name.clone(),
             current_track: self.current_track.clone(),
             subscribers: self.subscribers.clone(),
-            created_on: OffsetDateTime::now_utc().date(),
+            created_on: now,
+            duration_secs,
         };
         self.snapshots.push(snapshot);
+
+        self.last_snapshot_time = now;
     }
 
 
