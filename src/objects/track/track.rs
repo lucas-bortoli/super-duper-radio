@@ -1,37 +1,66 @@
-use serde::{Deserialize, Serialize};
+use std::{
+    error::Error,
+    fs::{self, File},
+    io::Read,
+    path::PathBuf,
+};
 
+use serde::Deserialize;
 
-#[derive(Clone, Serialize, Deserialize)]
+use crate::objects::track::audio_file_info::query;
+
+use super::audio_file_info::AudioFileInfo;
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct Narration {
+    pub source: String,
+    pub transcript: String,
+}
+
+#[derive(Clone, Deserialize, Debug)]
 pub struct Track {
     pub title: String,
     pub artist: String,
-    pub album: String,
-    pub duration: u32, // in seconds
-    pub file_format: String,
+    pub album_art: String,
     pub source: String,
-    pub after: Vec<Narration>,
-    pub before: Vec<Narration>
+
+    #[serde(default)]
+    pub narration_before: Vec<Narration>,
+    #[serde(default)]
+    pub narration_after: Vec<Narration>,
+
+    #[serde(skip_deserializing)]
+    pub file_info: AudioFileInfo,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Narration {
+#[derive(Clone, Deserialize, Debug)]
+pub struct StationManifest {
     pub title: String,
-    pub duration: u32, // in seconds
-    pub file_format: String,
-    pub source: String,
+    pub description: String,
+    pub seed: u64,
+    pub tracks: Vec<Track>,
 }
 
-impl Track {
-    pub fn new(title: String, artist: String, album: String, duration: u32, file_format: String, source: String, after: Vec<Narration>, before:Vec<Narration>) -> Track {
-        Track {
-            title,
-            artist,
-            album,
-            duration,
-            file_format,
-            source,
-            after,
-            before
+impl StationManifest {
+    pub fn from_base_dir(base_dir: PathBuf) -> Result<StationManifest, Box<dyn Error>> {
+        let manifest_location = base_dir.join("manifest.json");
+        let manifest_data = fs::read_to_string(manifest_location)?;
+        let mut manifest: StationManifest = serde_json::from_str(&manifest_data).unwrap();
+
+        for track in manifest.tracks.iter_mut() {
+            let file_source = base_dir.join(track.source.clone());
+            let file_info = query(file_source).unwrap_or_else(|_| {
+                panic!(
+                    "Erro ao extrair informações do arquivo da track: {:#?}",
+                    track
+                )
+            });
+
+            track.file_info = file_info;
+
+            println!("Carregado informações para a track: {:#?}", track);
         }
+
+        return Ok(manifest);
     }
 }
