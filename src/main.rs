@@ -1,4 +1,4 @@
-use std::sync::mpsc::{channel, sync_channel};
+use std::sync::mpsc::sync_channel;
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
@@ -10,7 +10,7 @@ use rocket::{
 };
 use station::station::Station;
 use station::station_state::StationState;
-use track::track::{StationManifest, Track};
+use track::track::StationManifest;
 
 pub mod cytoplasm;
 pub mod input_decoder;

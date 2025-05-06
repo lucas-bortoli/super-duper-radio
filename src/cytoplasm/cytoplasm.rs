@@ -1,9 +1,6 @@
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{
-        mpsc::{Receiver, RecvError},
-        Arc, Mutex,
-    },
+    sync::{mpsc::Receiver, Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
 };
@@ -13,7 +10,6 @@ use crate::{
     output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
     station::station_state::StationState,
-    track::track::Track,
 };
 
 const BACKPRESSURE_DELAY: Duration = Duration::from_millis(5);

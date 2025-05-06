@@ -56,7 +56,7 @@ impl Station {
                     .expect("falha ao transmitir estado atual");
 
                 // determinar próximo estado
-                let mut next_state = current_state.clone();
+                let next_state;
 
                 match current_state {
                     StationState::Initial => {
