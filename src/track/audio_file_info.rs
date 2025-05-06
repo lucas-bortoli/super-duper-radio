@@ -1,20 +1,27 @@
-use std::{fs::File, path::PathBuf, process::Command};
+use std::{
+    fs::{self, File},
+    path::PathBuf,
+    process::Command,
+};
 
 /// Representa as informações de um arquivo de áudio
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct AudioFileInfo {
     /// Localização do arquivo de áudio
-    location: PathBuf,
+    pub location: PathBuf,
     /// Tamanho do arquivo em bytes
-    size_bytes: u64,
+    pub size_bytes: u64,
     /// Duração do áudio em milissegundos
-    audio_milliseconds: u64,
+    pub audio_milliseconds: u64,
     // TODO: talvez mais campos legais de extrair do arquivo de áudio? bitrate, contagem de canais, título da música (se houver), outras..?
 }
 
 // Extrair as informações de um arquivo de áudio
 pub fn query(location: PathBuf) -> Result<AudioFileInfo, String> {
-    let metadata = File::open(&location)
+    let location_abs =
+        fs::canonicalize(location).expect("falha ao determinar caminho absoluto do arquivo");
+
+    let metadata = File::open(&location_abs)
         .map_err(|e| format!("query: falha ao abrir arquivo para inspeção: {}", e))?
         .metadata()
         .map_err(|e| format!("query: falha ao obter metadados do arquivo: {}", e))?;
@@ -28,7 +35,7 @@ pub fn query(location: PathBuf) -> Result<AudioFileInfo, String> {
             "format=duration",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
-            location.to_str().ok_or("query: localização inválida")?,
+            &location_abs.to_str().ok_or("query: localização inválida")?,
         ])
         .output()
         .map_err(|e| format!("query: falha no probe do arquivo: {}", e))?;
@@ -47,7 +54,7 @@ pub fn query(location: PathBuf) -> Result<AudioFileInfo, String> {
         .map_err(|e| format!("query: falha ao interpretar saída como f64: {}", e))?;
 
     Ok(AudioFileInfo {
-        location,
+        location: location_abs,
         size_bytes: metadata.len(),
         audio_milliseconds: (audio_seconds_float * 1000.0) as u64,
     })

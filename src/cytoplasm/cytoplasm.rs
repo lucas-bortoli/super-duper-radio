@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    path::PathBuf,
     sync::mpsc::Receiver,
     sync::{Arc, Mutex},
     thread::{self},
@@ -14,26 +13,22 @@ use crate::{
     track::track::Track,
 };
 
-const FUCKALL_DURATION: Duration = Duration::from_millis(5);
+const BACKPRESSURE_DELAY: Duration = Duration::from_millis(5);
 const SETPOINT_HIGH: usize = 10;
 const SETPOINT_LOW: usize = 5;
 
 pub struct Cytoplasm {
-    encoders: Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>>,
+    pub encoders: Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>>,
     pub output_streams: Arc<HashMap<OutputCodec, Arc<OutputStream>>>,
 }
 
 impl Cytoplasm {
-    pub fn new(
-        station_directory: PathBuf,
-        output_codecs: &[OutputCodec],
-        track_tx: Receiver<Track>,
-    ) -> Cytoplasm {
+    pub fn new(output_codecs: &[OutputCodec], track_tx: Receiver<Track>) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
-        Self::init_decoder_thread(station_directory.clone(), buffer.clone(), track_tx);
+        Self::init_decoder_thread(buffer.clone(), track_tx);
         Self::init_encoder_thread(encoders.clone(), buffer.clone());
 
         let output_streams_arc = Arc::new(output_streams);
@@ -72,26 +67,20 @@ impl Cytoplasm {
     }
 
     /// inicia a thread responsável por decodificar arquivos de áudio
-    /// ela carrega trilhas conforme definidas e enfileira pacotes no buffer compartilhado
-    fn init_decoder_thread(
-        station_directory: PathBuf,
-        buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
-        track_rx: Receiver<Track>,
-    ) {
+    /// ela carrega trilhas conforme recebidas e enfileira pacotes no buffer compartilhado
+    fn init_decoder_thread(buffer: Arc<Mutex<VecDeque<AudioPacket>>>, track_rx: Receiver<Track>) {
         thread::spawn(move || {
             while let Ok(track) = track_rx.recv() {
-                let file_path = station_directory.join(&track.source);
-                eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path.display());
+                let file_path = track.file_info.location.to_str().unwrap().to_string();
+                eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
 
-                let mut file = input_audio_file::open_input_file_strategy(
-                    file_path.to_string_lossy().into_owned(),
-                );
+                let mut file = input_audio_file::open_input_file_strategy(file_path);
                 for packet in &mut file {
                     let mut buf = buffer.lock().unwrap();
                     if buf.len() >= SETPOINT_HIGH {
                         drop(buf);
                         while buffer.lock().unwrap().len() > SETPOINT_LOW {
-                            thread::sleep(FUCKALL_DURATION);
+                            thread::sleep(BACKPRESSURE_DELAY);
                         }
                         buffer.lock().unwrap().push_back(packet);
                     } else {
@@ -112,7 +101,7 @@ impl Cytoplasm {
             fn block_until_buffer_full(buffer: &Arc<Mutex<VecDeque<AudioPacket>>>) {
                 // fazer porra nenhuma até o buffer estar cheio
                 loop {
-                    thread::sleep(FUCKALL_DURATION);
+                    thread::sleep(BACKPRESSURE_DELAY);
                     let guard = buffer.lock().unwrap();
                     if guard.len() >= SETPOINT_HIGH {
                         // finalmente buffer cheio; a outra thread deve ter printado "BACKPRESSURE!!"

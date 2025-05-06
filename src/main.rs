@@ -53,11 +53,7 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let cytoplasm = Cytoplasm::new(
-            station_base_dir.clone(),
-            &[OutputCodec::Mp3_64kbps],
-            track_rx,
-        );
+        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], track_rx);
 
         let station = Station::new(station_base_dir, manifest, cytoplasm, track_tx);
 
