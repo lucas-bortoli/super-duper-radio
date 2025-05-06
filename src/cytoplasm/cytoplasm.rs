@@ -1,7 +1,9 @@
 use std::{
     collections::{HashMap, VecDeque},
-    sync::mpsc::Receiver,
-    sync::{Arc, Mutex},
+    sync::{
+        mpsc::{Receiver, RecvError},
+        Arc, Mutex,
+    },
     thread::{self},
     time::{Duration, Instant},
 };
@@ -10,6 +12,7 @@ use crate::{
     input_decoder::input_audio_file::{self, AudioPacket},
     output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
+    station::station_state::StationState,
     track::track::Track,
 };
 
@@ -23,12 +26,12 @@ pub struct Cytoplasm {
 }
 
 impl Cytoplasm {
-    pub fn new(output_codecs: &[OutputCodec], track_tx: Receiver<Track>) -> Cytoplasm {
+    pub fn new(output_codecs: &[OutputCodec], state_rx: Receiver<StationState>) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
-        Self::init_decoder_thread(buffer.clone(), track_tx);
+        Self::init_decoder_thread(buffer.clone(), state_rx);
         Self::init_encoder_thread(encoders.clone(), buffer.clone());
 
         let output_streams_arc = Arc::new(output_streams);
@@ -68,26 +71,38 @@ impl Cytoplasm {
 
     /// inicia a thread responsável por decodificar arquivos de áudio
     /// ela carrega trilhas conforme recebidas e enfileira pacotes no buffer compartilhado
-    fn init_decoder_thread(buffer: Arc<Mutex<VecDeque<AudioPacket>>>, track_rx: Receiver<Track>) {
-        thread::spawn(move || {
-            while let Ok(track) = track_rx.recv() {
-                let file_path = track.file_info.location.to_str().unwrap().to_string();
-                eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
+    fn init_decoder_thread(
+        buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
+        state_rx: Receiver<StationState>,
+    ) {
+        thread::spawn(move || 'decoder: loop {
+            match state_rx.recv() {
+                Ok(current_state) => match current_state {
+                    StationState::Initial => continue, // estação ainda está inicializando, ignorar
+                    StationState::Track { track } => {
+                        let file_path = track.file_info.location.to_str().unwrap().to_string();
+                        eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
 
-                let mut file = input_audio_file::open_input_file_strategy(file_path);
-                for packet in &mut file {
-                    let mut buf = buffer.lock().unwrap();
-                    if buf.len() >= SETPOINT_HIGH {
-                        drop(buf);
-                        while buffer.lock().unwrap().len() > SETPOINT_LOW {
-                            thread::sleep(BACKPRESSURE_DELAY);
+                        let mut file = input_audio_file::open_input_file_strategy(file_path);
+                        for packet in &mut file {
+                            let mut buf = buffer.lock().unwrap();
+                            if buf.len() >= SETPOINT_HIGH {
+                                drop(buf);
+                                while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                                    thread::sleep(BACKPRESSURE_DELAY);
+                                }
+                                buffer.lock().unwrap().push_back(packet);
+                            } else {
+                                buf.push_back(packet);
+                            }
                         }
-                        buffer.lock().unwrap().push_back(packet);
-                    } else {
-                        buf.push_back(packet);
                     }
-                }
+                    StationState::Narration => continue, // TODO: play narration
+                    StationState::Ended => break 'decoder,
+                },
+                Err(_) => break,
             }
+
             eprintln!("cytoplasm/d: canal de tracks fechado");
         });
     }

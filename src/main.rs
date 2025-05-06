@@ -9,6 +9,7 @@ use rocket::{
     response::{content::RawHtml, stream::ByteStream},
 };
 use station::station::Station;
+use station::station_state::StationState;
 use track::track::{StationManifest, Track};
 
 pub mod cytoplasm;
@@ -45,7 +46,7 @@ fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
-        let (track_tx, track_rx) = sync_channel::<Track>(5);
+        let (state_tx, state_rx) = sync_channel::<StationState>(1);
         let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
             .join("stations")
             .join(station_id);
@@ -53,9 +54,9 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], track_rx);
+        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], state_rx);
 
-        let station = Station::new(station_base_dir, manifest, cytoplasm, track_tx);
+        let station = Station::new(station_base_dir, manifest, cytoplasm, state_tx);
 
         stations.insert(station_id.to_owned(), station);
     }

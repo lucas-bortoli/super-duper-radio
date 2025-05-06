@@ -5,10 +5,7 @@ use tokio::sync::oneshot;
 
 use crate::{
     cytoplasm::cytoplasm::Cytoplasm,
-    track::{
-        track::{StationManifest, Track},
-        track_iterator::TrackIterator,
-    },
+    track::{track::StationManifest, track_iterator::TrackIterator},
 };
 
 use super::{station_snapshot::StationSnapshot, station_state::StationState};
@@ -16,13 +13,10 @@ use super::{station_snapshot::StationSnapshot, station_state::StationState};
 pub struct Station {
     pub base_dir: PathBuf,
     pub manifest: StationManifest,
-    pub track_tx: SyncSender<Track>,
     pub cytoplasm: Cytoplasm,
 
     pub state: StationState,
     pub snapshots: Vec<StationSnapshot>,
-    pub current_track: Track,
-    pub iterator: TrackIterator,
     last_snapshot_time: OffsetDateTime,
 
     _cancel_signal_sender: Option<oneshot::Sender<bool>>,
@@ -33,15 +27,19 @@ impl Station {
         base_dir: PathBuf,
         manifest: StationManifest,
         cytoplasm: Cytoplasm,
-        track_tx: SyncSender<Track>,
+        state_tx: SyncSender<StationState>,
     ) -> Station {
-        let iterator = TrackIterator::new(manifest.tracks.clone(), manifest.seed);
-        let current_track = iterator.get_current().clone();
-        let _ = track_tx.send(current_track.clone());
         let now = OffsetDateTime::now_utc();
+
+        let state_thread_manifest = manifest.clone();
 
         let (cancel_signal_sender, mut cancel_signal_receiver) = oneshot::channel::<bool>();
         thread::spawn(move || {
+            let iterator = TrackIterator::new(
+                state_thread_manifest.tracks.clone(),
+                state_thread_manifest.seed,
+            );
+
             let mut current_state = StationState::Initial;
 
             'state_loop: loop {
@@ -52,12 +50,27 @@ impl Station {
                     _ => {}
                 }
 
-                let next_state = current_state.clone();
+                // notificar citoplasma do estado atual
+                state_tx
+                    .send(current_state.clone())
+                    .expect("falha ao transmitir estado atual");
+
+                // determinar próximo estado
+                let mut next_state = current_state.clone();
 
                 match current_state {
-                    StationState::Initial => {}
-                    StationState::Narration => {}
-                    StationState::Track => {}
+                    StationState::Initial => {
+                        next_state = StationState::Track {
+                            track: iterator.get_current().clone(),
+                        }
+                    }
+                    StationState::Narration => unimplemented!(),
+                    StationState::Track { track: _ } => {
+                        next_state = StationState::Track {
+                            track: iterator.get_next().clone(),
+                        }
+                    }
+                    StationState::Ended => break 'state_loop,
                 }
 
                 eprintln!("Station: {} -> {}", current_state, next_state);
@@ -69,12 +82,9 @@ impl Station {
         Station {
             base_dir,
             manifest,
-            track_tx,
             cytoplasm,
             state: StationState::Initial,
             snapshots: Vec::new(),
-            current_track,
-            iterator,
             last_snapshot_time: now,
             _cancel_signal_sender: Some(cancel_signal_sender),
         }
@@ -87,7 +97,6 @@ impl Station {
 
         let snapshot = StationSnapshot {
             name: self.manifest.title.clone(),
-            current_track: self.current_track.clone(),
             created_on: now,
             duration_secs,
         };
