@@ -4,6 +4,7 @@ use std::{collections::HashMap, env, path::Path};
 use bytes::Bytes;
 use cytoplasm::cytoplasm::Cytoplasm;
 use output_encoder::audio_encoder::OutputCodec;
+use rocket::response::stream::EventStream;
 use rocket::{
     http::ContentType,
     response::{content::RawHtml, stream::ByteStream},
@@ -41,6 +42,14 @@ fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStre
     stream.create_consumer_http_stream()
 }
 
+#[get("/station/events")]
+fn station_event_endpoint(state: &rocket::State<StationMap>) -> EventStream![] {
+    let station = state.get("RadioZero").unwrap();
+    let stream = station.metadata_stream.clone();
+
+    stream.create_consumer_sse_stream()
+}
+
 #[launch]
 fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
@@ -61,7 +70,8 @@ fn rocket() -> _ {
         stations.insert(station_id.to_owned(), station);
     }
 
-    rocket::build()
-        .manage(stations)
-        .mount("/", routes![index, station_endpoint])
+    rocket::build().manage(stations).mount(
+        "/",
+        routes![index, station_endpoint, station_event_endpoint],
+    )
 }
