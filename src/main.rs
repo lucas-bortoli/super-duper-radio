@@ -8,13 +8,15 @@ use rocket::{
     http::ContentType,
     response::{content::RawHtml, stream::ByteStream},
 };
-use web_radio::objects::station::station::Station;
-use web_radio::objects::track::track::{StationManifest, Track};
+use station::station::Station;
+use track::track::{StationManifest, Track};
 
 pub mod cytoplasm;
 pub mod input_decoder;
 pub mod output_encoder;
 pub mod output_stream;
+pub mod station;
+pub mod track;
 
 #[macro_use]
 extern crate rocket;

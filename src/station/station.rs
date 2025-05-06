@@ -2,19 +2,18 @@ use rocket::time::OffsetDateTime;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 
-use crate::objects::track::track::StationManifest;
-use crate::objects::{
-    station::{station_snapshot::StationSnapshot, station_state::StationState},
-    subscriber::Subscriber,
-    track::{track::Track, track_iterator::TrackIterator},
+use crate::track::{
+    track::{StationManifest, Track},
+    track_iterator::TrackIterator,
 };
+
+use super::{station_snapshot::StationSnapshot, station_state::StationState};
 
 pub struct Station {
     pub base_dir: PathBuf,
     pub manifest: StationManifest,
     pub track_tx: Sender<Track>,
 
-    pub subscribers: Vec<Subscriber>,
     pub state: StationState,
     pub snapshots: Vec<StationSnapshot>,
     pub current_track: Track,
@@ -33,7 +32,6 @@ impl Station {
             base_dir,
             manifest,
             track_tx,
-            subscribers: Vec::new(),
             state: StationState::Down,
             snapshots: Vec::new(),
             current_track,
@@ -70,7 +68,6 @@ impl Station {
         let snapshot = StationSnapshot {
             name: self.manifest.title.clone(),
             current_track: self.current_track.clone(),
-            subscribers: self.subscribers.clone(),
             created_on: now,
             duration_secs,
         };

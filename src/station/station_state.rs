@@ -1,4 +1,4 @@
-use crate::objects::station::station::Station;
+use super::station::Station;
 
 pub enum StationState {
     Down,

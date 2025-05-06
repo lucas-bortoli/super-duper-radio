@@ -1,13 +1,12 @@
 use std::{
     error::Error,
-    fs::{self, File},
-    io::Read,
+    fs::{self},
     path::PathBuf,
 };
 
 use serde::Deserialize;
 
-use crate::objects::track::audio_file_info::query;
+use crate::track::audio_file_info;
 
 use super::audio_file_info::AudioFileInfo;
 
@@ -49,7 +48,7 @@ impl StationManifest {
 
         for track in manifest.tracks.iter_mut() {
             let file_source = base_dir.join(track.source.clone());
-            let file_info = query(file_source).unwrap_or_else(|_| {
+            let file_info = audio_file_info::query(file_source).unwrap_or_else(|_| {
                 panic!(
                     "Erro ao extrair informações do arquivo da track: {:#?}",
                     track

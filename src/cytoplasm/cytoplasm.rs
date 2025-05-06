@@ -1,18 +1,17 @@
 use std::{
     collections::{HashMap, VecDeque},
     path::PathBuf,
+    sync::mpsc::Receiver,
     sync::{Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
-    sync::mpsc::Receiver,
 };
-
-use web_radio::objects::track::track::Track;
 
 use crate::{
     input_decoder::input_audio_file::{self, AudioPacket},
     output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
+    track::track::Track,
 };
 
 const FUCKALL_DURATION: Duration = Duration::from_millis(5);
@@ -25,7 +24,11 @@ pub struct Cytoplasm {
 }
 
 impl Cytoplasm {
-    pub fn new(station_directory: PathBuf, output_codecs: &[OutputCodec], track_tx: Receiver<Track>) -> Cytoplasm {
+    pub fn new(
+        station_directory: PathBuf,
+        output_codecs: &[OutputCodec],
+        track_tx: Receiver<Track>,
+    ) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
@@ -79,7 +82,7 @@ impl Cytoplasm {
             while let Ok(track) = track_rx.recv() {
                 let file_path = station_directory.join(&track.source);
                 eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path.display());
-    
+
                 let mut file = input_audio_file::open_input_file_strategy(
                     file_path.to_string_lossy().into_owned(),
                 );
@@ -99,7 +102,6 @@ impl Cytoplasm {
             eprintln!("cytoplasm/d: canal de tracks fechado");
         });
     }
-    
 
     /// inicia a thread que consome pacotes do buffer, envia para os encoders e mantém o timing de reprodução
     fn init_encoder_thread(
