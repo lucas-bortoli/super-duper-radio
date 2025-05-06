@@ -1,37 +1,26 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
+#[derive(Clone, Deserialize, Debug)]
+pub struct Narration {
+    pub source: String,
+    pub transcript: String,
+}
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct Track {
+    pub source: String,
     pub title: String,
     pub artist: String,
-    pub album: String,
-    pub duration: u32, // in seconds
-    pub file_format: String,
-    pub source: String,
-    pub after: Vec<Narration>,
-    pub before: Vec<Narration>
+    pub album_art: String,
+    #[serde(default)]
+    pub narration_before: Vec<Narration>,
+    #[serde(default)]
+    pub narration_after: Vec<Narration>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Narration {
+#[derive(Clone, Deserialize, Debug)]
+pub struct Playlist {
     pub title: String,
-    pub duration: u32, // in seconds
-    pub file_format: String,
-    pub source: String,
-}
-
-impl Track {
-    pub fn new(title: String, artist: String, album: String, duration: u32, file_format: String, source: String, after: Vec<Narration>, before:Vec<Narration>) -> Track {
-        Track {
-            title,
-            artist,
-            album,
-            duration,
-            file_format,
-            source,
-            after,
-            before
-        }
-    }
+    pub description: String,
+    pub tracks: Vec<Track>,
 }
