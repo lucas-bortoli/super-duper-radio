@@ -22,7 +22,7 @@ document.querySelectorAll("nav span").forEach((tab) => {
 });
 
 const stations = [
-    ["Diamond City Radio", "/station/diamondcity"],
+    ["Diamond City Radio", "/station"],
     ["Distress Signal", null],
     ["Emergency Frequency RJ1138", null],
     ["Military Frequency AF95", null],
@@ -49,15 +49,21 @@ const setSelection = (url) =>
     list.querySelector(`[data-station="${url}"]`)?.classList.add("active");
 
 function playUrl(url) {
-    if (player.getAttribute("data-src") === url) {
-        removeSelection();
+    const isPlaying = player.getAttribute("data-src") === url;
+
+    removeSelection();
+
+    if (isPlaying) {
+        // Pausa e reseta
+        player.pause();
         player.removeAttribute("data-src");
         player.src = "";
     } else {
-        removeSelection();
+        // Toca nova estação
         setSelection(url);
         player.setAttribute("data-src", url);
         player.src = url;
+        player.play();
     }
 }
 
