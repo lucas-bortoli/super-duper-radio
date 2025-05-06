@@ -75,35 +75,39 @@ impl Cytoplasm {
         buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
         state_rx: Receiver<StationState>,
     ) {
-        thread::spawn(move || 'decoder: loop {
-            match state_rx.recv() {
-                Ok(current_state) => match current_state {
-                    StationState::Initial => continue, // estação ainda está inicializando, ignorar
-                    StationState::Track { track } => {
-                        let file_path = track.file_info.location.to_str().unwrap().to_string();
-                        eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
+        thread::spawn(move || 'decoder: {
+            loop {
+                eprintln!("cytoplasm/d: aguardando próximo estado da estação...");
 
-                        let mut file = input_audio_file::open_input_file_strategy(file_path);
-                        for packet in &mut file {
-                            let mut buf = buffer.lock().unwrap();
-                            if buf.len() >= SETPOINT_HIGH {
-                                drop(buf);
-                                while buffer.lock().unwrap().len() > SETPOINT_LOW {
-                                    thread::sleep(BACKPRESSURE_DELAY);
+                match state_rx.recv() {
+                    Ok(current_state) => match current_state {
+                        StationState::Initial => continue, // estação ainda está inicializando, ignorar
+                        StationState::Track { track } => {
+                            let file_path = track.file_info.location.to_str().unwrap().to_string();
+                            eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
+
+                            let mut file = input_audio_file::open_input_file_strategy(file_path);
+                            for packet in &mut file {
+                                let mut buf = buffer.lock().unwrap();
+                                if buf.len() >= SETPOINT_HIGH {
+                                    drop(buf);
+                                    while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                                        thread::sleep(BACKPRESSURE_DELAY);
+                                    }
+                                    buffer.lock().unwrap().push_back(packet);
+                                } else {
+                                    buf.push_back(packet);
                                 }
-                                buffer.lock().unwrap().push_back(packet);
-                            } else {
-                                buf.push_back(packet);
                             }
                         }
-                    }
-                    StationState::Narration => continue, // TODO: play narration
-                    StationState::Ended => break 'decoder,
-                },
-                Err(_) => break,
+                        StationState::Narration => continue, // TODO: play narration
+                        StationState::Ended => break 'decoder,
+                    },
+                    Err(_) => break,
+                }
             }
 
-            eprintln!("cytoplasm/d: canal de tracks fechado");
+            eprintln!("cytoplasm/d: thread finalizando")
         });
     }
 

@@ -31,7 +31,7 @@ type StationMap = HashMap<String, Station>;
 
 #[get("/station")]
 fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
-    let station = state.get("diamondcityradio").unwrap();
+    let station = state.get("RadioZero").unwrap();
     let stream = station
         .cytoplasm
         .output_streams
@@ -46,7 +46,7 @@ fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
-        let (state_tx, state_rx) = sync_channel::<StationState>(1);
+        let (state_tx, state_rx) = sync_channel::<StationState>(0);
         let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
             .join("stations")
             .join(station_id);

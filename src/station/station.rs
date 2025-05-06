@@ -35,7 +35,7 @@ impl Station {
 
         let (cancel_signal_sender, mut cancel_signal_receiver) = oneshot::channel::<bool>();
         thread::spawn(move || {
-            let iterator = TrackIterator::new(
+            let mut iterator = TrackIterator::new(
                 state_thread_manifest.tracks.clone(),
                 state_thread_manifest.seed,
             );
@@ -61,13 +61,13 @@ impl Station {
                 match current_state {
                     StationState::Initial => {
                         next_state = StationState::Track {
-                            track: iterator.get_current().clone(),
+                            track: iterator.next().unwrap(),
                         }
                     }
                     StationState::Narration => unimplemented!(),
                     StationState::Track { track: _ } => {
                         next_state = StationState::Track {
-                            track: iterator.get_next().clone(),
+                            track: iterator.next().unwrap(),
                         }
                     }
                     StationState::Ended => break 'state_loop,
