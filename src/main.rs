@@ -1,13 +1,16 @@
-use rocket::{
-    http::ContentType,
-    response::{
-        content::{RawCss, RawHtml},
-        stream::ByteStream,
-    },
-    tokio::sync::broadcast,
-};
+use std::sync::mpsc::channel;
+use std::{collections::HashMap, env, path::Path};
 
-use rocket::fs::{FileServer, relative};
+use bytes::Bytes;
+use cytoplasm::cytoplasm::Cytoplasm;
+use output_encoder::audio_encoder::OutputCodec;
+use rocket::{
+    fs::{relative, FileServer},
+    http::ContentType,
+    response::{content::RawHtml, stream::ByteStream},
+};
+use station::station::Station;
+use track::track::{StationManifest, Track};
 
 use std::{
     fs::File,
@@ -18,17 +21,26 @@ use std::{
     time::Duration,
 };
 
+pub mod cytoplasm;
+pub mod input_decoder;
+pub mod output_encoder;
+pub mod output_stream;
+pub mod station;
+pub mod track;
+
 #[macro_use]
 extern crate rocket;
 
+type StationMap = HashMap<String, Station>;
+
 #[get("/")]
 fn index() -> RawHtml<&'static [u8]> {
-    return RawHtml(include_bytes!("ui/ui.html"));
+    RawHtml(include_bytes!("ui/ui.html"))
 }
 
 #[get("/ui.css")]
-fn stylesheet() -> RawCss<&'static [u8]> {
-    return RawCss(include_bytes!("ui/ui.css"));
+fn stylesheet() -> (ContentType, &'static [u8]) {
+    (ContentType::CSS, include_bytes!("ui/ui.css"))
 }
 
 #[get("/app.js")]
@@ -43,25 +55,55 @@ fn favicon() -> (ContentType, &'static [u8]) {
 
 #[get("/get_stations")]
 fn get_stations() -> &'static str {
-    "Retorna a lista de estacoes ativas no momento!" 
+    "Retorna a lista de estacoes ativas no momento!"
+}
+
+#[get("/station")]
+fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
+    let station = state.get("RadioZero").unwrap(); // ou diamondcityradio, se for o nome certo
+    let stream = station
+        .cytoplasm
+        .output_streams
+        .get(&OutputCodec::Mp3_64kbps)
+        .unwrap();
+
+    stream.create_consumer_http_stream()
 }
 
 #[launch]
 fn rocket() -> _ {
-    // let (tx, _) = broadcast::channel::<Box<[u8; POLL_BUFFER_SIZE_BYTES]>>(8);
+    let mut stations: StationMap = HashMap::new();
 
-    // let broadcaster = Arc::new(AudioBroadcaster { sender: tx.clone() });
+    for station_id in vec!["RadioZero"] {
+        let (track_tx, track_rx) = channel::<Track>();
+        let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
+            .join("stations")
+            .join(station_id);
 
-    // let station = Station::from_file("./diamond_city_radio/radio.yaml")
-    // .expect("Failed to parse station file");
-    // let station_thread_clone = station.clone();
+        let manifest = StationManifest::from_base_dir(station_base_dir.clone())
+            .expect("falha ao interpretar manifesto da estação");
 
-    let station ="teste";
+        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], track_rx);
+        let station = Station::new(station_base_dir, manifest, cytoplasm, track_tx);
+
+        stations.insert(station_id.to_owned(), station);
+    }
 
     rocket::build()
-        .mount("/", routes![index, stylesheet, javascript, favicon])
-        .mount("/backgrounds", FileServer::from(relative!("src/ui/backgrounds")))     
-        .mount("/", routes![])
+        .manage(stations)
+        .mount(
+            "/",
+            routes![
+                index,
+                stylesheet,
+                javascript,
+                favicon,
+                get_stations,
+                station_endpoint
+            ],
+        )
+        .mount(
+            "/backgrounds",
+            FileServer::from(relative!("src/ui/backgrounds")),
+        )
 }
-
-// sobe

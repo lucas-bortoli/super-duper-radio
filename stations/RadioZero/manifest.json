@@ -1,0 +1,103 @@
+{
+  "title": "Super Duper Radio",
+  "description": "Seleção das músicas mais felizes e quase completamente instrumental da época. Principalmente música de produção da Europa Ocidental.",
+  "seed": 1000,
+  "tracks": [
+    {
+      "title": "Hotsy-Totsy",
+      "artist": "Heinz Kiessling",
+      "source": "hotsy_totsy.mp3",
+      "album_art": "hotsy_totsy.jpg"
+    },
+    {
+      "title": "Bargains Galore",
+      "artist": "Dennis Berry & Stuart Crombie",
+      "source": "bargains_galore.mp3",
+      "album_art": "bargains_galore.jpg"
+    },
+    {
+      "title": "Pink Deville",
+      "artist": "Paul Rothman",
+      "source": "pink_deville.mp3",
+      "album_art": "generic.jpg"
+    },
+    {
+      "title": "Brazil (Aquarela do Brasil)",
+      "artist": "Antonio Carlos Jobim",
+      "source": "aquarela_do_brasil.mp3",
+      "album_art": "aquarela_do_brasil.jpg"
+    },
+    {
+      "title": "Cha Cha Nova",
+      "artist": "NDR Big Band",
+      "source": "cha_cha_nova.mp3",
+      "album_art": "cha_cha_nova.jpg"
+    },
+    {
+      "title": "Clique Chic",
+      "artist": "Jo Part & Christian Mondstein",
+      "source": "clique_chic.mp3",
+      "album_art": "generic.jpg"
+    },
+    {
+      "title": "Daisy Bird",
+      "artist": "Roger John Webb & Barbara Moore",
+      "source": "daisy_bird.mp3",
+      "album_art": "daisy_bird.jpg"
+    },
+    {
+      "title": "Dancing On the Avenue",
+      "artist": "Desconhecido",
+      "source": "dancing_on_the_avenue.mp3",
+      "album_art": "generic.jpg"
+    },
+    {
+      "title": "Flirtation Waltz",
+      "artist": "Frank Chacksfield Orchestra",
+      "source": "flirtation_waltz.mp3",
+      "album_art": "flirtation_waltz.jpg"
+    },
+    {
+      "title": "Gay Spirits",
+      "artist": "David Rose and His Orchestra",
+      "source": "gay_spirits.mp3",
+      "album_art": "gay_spirits.jpg"
+    },
+    {
+      "title": "Gay Time",
+      "artist": "Alan Perry",
+      "source": "gay_time.mp3",
+      "album_art": "gay_time.jpg"
+    },
+    {
+      "title": "Glitterati Party",
+      "artist": "Werner Tautz",
+      "source": "glitterati_party.mp3",
+      "album_art": "glitterati_party.jpg"
+    },
+    {
+      "title": "Glow Worm Cha Cha Cha",
+      "artist": "Jackie Davis",
+      "source": "glow_worm_cha_cha_cha.mp3",
+      "album_art": "glow_worm_cha_cha_cha.jpg"
+    },
+    {
+      "title": "Hackney Carriage",
+      "artist": "Cedric King-Palmer",
+      "source": "hackney_carriage.mp3",
+      "album_art": "hackney_carriage.jpg"
+    },
+    {
+      "title": "Happy-Go-Lively",
+      "artist": "Laurie Johnson",
+      "source": "happy_go_lively.mp3",
+      "album_art": "happy_go_lively.jpg"
+    },
+    {
+      "title": "Temptation Sensation",
+      "artist": "Heinz Kiessling",
+      "source": "temptation_sensation.mp3",
+      "album_art": "temptation_sensation.jpg"
+    }
+  ]  
+}
