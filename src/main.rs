@@ -26,12 +26,7 @@ fn index() -> RawHtml<&'static [u8]> {
     return RawHtml(b"<!DOCTYPE html>\n<audio controls src='/station'>");
 }
 
-struct StationCyto {
-    pub cytoplasm: Cytoplasm,
-    pub station: Station,
-}
-
-type StationMap = HashMap<String, StationCyto>;
+type StationMap = HashMap<String, Station>;
 
 #[get("/station")]
 fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
@@ -58,11 +53,15 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let station = Station::new(station_base_dir.clone(), manifest, track_tx);
+        let cytoplasm = Cytoplasm::new(
+            station_base_dir.clone(),
+            &[OutputCodec::Mp3_64kbps],
+            track_rx,
+        );
 
-        let cytoplasm = Cytoplasm::new(station_base_dir, &[OutputCodec::Mp3_64kbps], track_rx);
+        let station = Station::new(station_base_dir, manifest, cytoplasm, track_tx);
 
-        stations.insert(station_id.to_owned(), StationCyto { cytoplasm, station });
+        stations.insert(station_id.to_owned(), station);
     }
 
     rocket::build()
