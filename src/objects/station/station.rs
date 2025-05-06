@@ -1,75 +1,61 @@
 use rocket::time::OffsetDateTime;
-use serde_json;
+use std::path::PathBuf;
 use std::sync::mpsc::Sender;
-use std::{fs::File, path::Path};
 
+use crate::objects::track::track::StationManifest;
 use crate::objects::{
-    station::{
-        station_snapshot::StationSnapshot,
-        station_state::{DownState, StationState},
-    },
+    station::{station_snapshot::StationSnapshot, station_state::StationState},
     subscriber::Subscriber,
-    track::{self, track::Track, track_iterator::TrackIterator},
+    track::{track::Track, track_iterator::TrackIterator},
 };
 
 pub struct Station {
-    pub name: String,
+    pub base_dir: PathBuf,
+    pub manifest: StationManifest,
+    pub track_tx: Sender<Track>,
+
     pub subscribers: Vec<Subscriber>,
-    pub path: String,
-    pub frequency: f32,
-    pub state: Box<dyn StationState>,
+    pub state: StationState,
     pub snapshots: Vec<StationSnapshot>,
     pub current_track: Track,
     pub iterator: TrackIterator,
-    pub track_tx: Sender<Track>,
     last_snapshot_time: OffsetDateTime,
 }
 
 impl Station {
-    pub fn new(
-        name: String,
-        path: String,
-        frequency: f32,
-        seed: u64,
-        track_tx: Sender<Track>,
-    ) -> Station {
-        let metadata_path = Path::new(&path).join("metadata.json");
-        let file = File::open(&metadata_path).expect("Station: Falha ao abrir metadata.json");
-        let tracks: Vec<Track> = serde_json::from_reader(file).expect("Station: JSON inválido");
-
-        let iterator = TrackIterator::new(tracks.clone(), seed);
+    pub fn new(base_dir: PathBuf, manifest: StationManifest, track_tx: Sender<Track>) -> Station {
+        let iterator = TrackIterator::new(manifest.tracks.clone(), manifest.seed);
         let current_track = iterator.get_current().clone();
         let _ = track_tx.send(current_track.clone());
         let now = OffsetDateTime::now_utc();
 
         Station {
-            name,
+            base_dir,
+            manifest,
+            track_tx,
             subscribers: Vec::new(),
-            path,
-            frequency,
-            state: Box::new(DownState::new()),
+            state: StationState::Down,
             snapshots: Vec::new(),
             current_track,
             iterator,
-            track_tx,
             last_snapshot_time: now,
         }
     }
 
     pub fn play(&mut self) {
-        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let old = std::mem::replace(&mut self.state, StationState::Down);
         let new_state = old.play(self);
         self.state = new_state;
     }
 
     pub fn stop(&mut self) {
-        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let old = std::mem::replace(&mut self.state, StationState::Down);
         let new_state = old.stop(self);
         self.state = new_state;
     }
 
     pub fn next(&mut self) {
-        let old = std::mem::replace(&mut self.state, Box::new(DownState::new()));
+        let old = std::mem::replace(&mut self.state, StationState::Down);
         let new_state = old.next(self);
         self.state = new_state;
 
@@ -82,7 +68,7 @@ impl Station {
         let duration_secs = delta.whole_seconds() as f64;
 
         let snapshot = StationSnapshot {
-            name: self.name.clone(),
+            name: self.manifest.title.clone(),
             current_track: self.current_track.clone(),
             subscribers: self.subscribers.clone(),
             created_on: now,
@@ -103,7 +89,7 @@ impl Station {
         // TODO: implementar integração com Cytoplasm para reload de arquivo
         println!(
             "Station[{}]: track mudou para {}",
-            self.name, self.current_track.title
+            self.manifest.title, self.current_track.title
         );
     }
 
@@ -112,13 +98,13 @@ impl Station {
         // TODO: integrar com Cytoplasm
         println!(
             "Station[{}]: iniciando playback de {}",
-            self.name, self.current_track.title
+            self.manifest.title, self.current_track.title
         );
     }
 
     /// Para o playback (State Playing -> Down)
     pub fn stop_playback(&self) {
         // TODO: integrar com Cytoplasm
-        println!("Station[{}]: parou playback", self.name);
+        println!("Station[{}]: parou playback", self.manifest.title);
     }
 }
