@@ -1,6 +1,7 @@
 {
   "title": "Super Duper Radio",
   "description": "Seleção das músicas mais felizes e quase completamente instrumental da época. Principalmente música de produção da Europa Ocidental.",
+  "seed": 1000,
   "tracks": [
     {
       "title": "Hotsy-Totsy",

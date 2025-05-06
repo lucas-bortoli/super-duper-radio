@@ -1,7 +1,7 @@
 use std::{fs::File, path::PathBuf, process::Command};
 
 /// Representa as informações de um arquivo de áudio
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct AudioFileInfo {
     /// Localização do arquivo de áudio
     location: PathBuf,
