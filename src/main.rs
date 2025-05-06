@@ -1,4 +1,4 @@
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, sync_channel};
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
@@ -45,7 +45,7 @@ fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
-        let (track_tx, track_rx) = channel::<Track>();
+        let (track_tx, track_rx) = sync_channel::<Track>(5);
         let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
             .join("stations")
             .join(station_id);
