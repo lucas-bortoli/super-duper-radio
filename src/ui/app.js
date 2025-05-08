@@ -13,11 +13,11 @@ document.querySelectorAll("nav span").forEach((tab) => {
             el.hidden = true;
             el.classList.remove("active");
         });
-        
+
         const selectedTab = document.getElementById(`${selected}-tab`);
         selectedTab.hidden = false;
         selectedTab.classList.add("active");
-        
+
     });
 });
 
@@ -153,4 +153,18 @@ for (const [item, action] of inventoryItems) {
         el.setAttribute("aria-disabled", true);
     }
     inventoryList.appendChild(el);
+}
+
+// Mapa interativo com Panzoom
+const mapImage = document.querySelector("#map-tab img");
+
+if (mapImage) {
+    const panzoom = Panzoom(mapImage, {
+        maxScale: 5,
+        minScale: 1,
+        contain: 'outside',
+    });
+
+    // Habilita o uso do mouse wheel para zoom
+    mapImage.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
 }
