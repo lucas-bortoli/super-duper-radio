@@ -54,6 +54,7 @@ impl Station {
                 state_tx
                     .send(current_state.clone())
                     .expect("falha ao transmitir estado atual");
+                eprintln!("station: current state {}", current_state);
 
                 // determinar próximo estado
                 let next_state;
@@ -72,8 +73,6 @@ impl Station {
                     }
                     StationState::Ended => break 'state_loop,
                 }
-
-                eprintln!("Station: {} -> {}", current_state, next_state);
 
                 current_state = next_state;
             }
