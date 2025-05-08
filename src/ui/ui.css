@@ -282,3 +282,11 @@ audio {
 .data-right span {
   font-weight: bold;
 }
+
+.tab-header {
+  font-family: monospace;
+  color: #00ff00;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}

@@ -135,7 +135,12 @@ const inventoryItems = [
     ["VaultLady", () => setBackground("./backgrounds/ladyfalloutpipboywallpaper.jpeg")],
     ["VaultBoy", () => setBackground("./backgrounds/wallpaperpipboy.jpeg")],
     ["Nuka-Cola", () => setBackground("./backgrounds/nukacolaladywallpaper.jpeg")],
-    ["Nuka-Cola", () => setBackground("./backgrounds/nukacolaladywallpaper.jpeg")],
+    ["Rainy", () => setBackground("./backgrounds/tumblr.gif")],
+    ["Coding", () => setBackground("./backgrounds/log.gif")],
+    ["RedEyes", () => setBackground("./backgrounds/RedEyes.gif")],
+    ["Aquarium", () => setBackground("./backgrounds/aquarium.gif")],
+    ["Idk", () => setBackground("./backgrounds/natura.gif")],
+    ["Blueocean", () => setBackground("./backgrounds/blueocean.gif")],
     ["Chave da Vault 111", null],
 ];
 
