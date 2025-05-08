@@ -2,7 +2,7 @@ use std::sync::mpsc::sync_channel;
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
-use cytoplasm::cytoplasm::Cytoplasm;
+use cytoplasm::Cytoplasm;
 use output_encoder::audio_encoder::OutputCodec;
 use rocket::response::stream::EventStream;
 use rocket::{

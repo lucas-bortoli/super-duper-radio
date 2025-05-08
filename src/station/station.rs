@@ -1,4 +1,3 @@
-use rocket::time::OffsetDateTime;
 use std::sync::mpsc::SyncSender;
 use std::sync::Arc;
 use std::{path::PathBuf, thread};
@@ -6,12 +5,12 @@ use tokio::sync::oneshot;
 
 use crate::station::metadata_output_stream::Metadata;
 use crate::{
-    cytoplasm::cytoplasm::Cytoplasm,
+    cytoplasm::Cytoplasm,
     track::{track::StationManifest, track_iterator::TrackIterator},
 };
 
-use super::metadata_output_stream::{self, MetadataOutputStream};
-use super::{station_snapshot::StationSnapshot, station_state::StationState};
+use super::metadata_output_stream::MetadataOutputStream;
+use super::station_state::StationState;
 
 pub struct Station {
     pub base_dir: PathBuf,
@@ -19,10 +18,6 @@ pub struct Station {
     pub cytoplasm: Cytoplasm,
 
     pub metadata_stream: Arc<MetadataOutputStream>,
-
-    pub state: StationState,
-    pub snapshots: Vec<StationSnapshot>,
-    last_snapshot_time: OffsetDateTime,
 
     _cancel_signal_sender: Option<oneshot::Sender<bool>>,
 }
@@ -34,8 +29,6 @@ impl Station {
         cytoplasm: Cytoplasm,
         state_tx: SyncSender<StationState>,
     ) -> Station {
-        let now = OffsetDateTime::now_utc();
-
         let metadata_stream = Arc::new(MetadataOutputStream::new());
 
         let state_thread_metadata_stream = metadata_stream.clone();
@@ -98,26 +91,8 @@ impl Station {
             manifest,
             cytoplasm,
             metadata_stream,
-            state: StationState::Initial,
-            snapshots: Vec::new(),
-            last_snapshot_time: now,
             _cancel_signal_sender: Some(cancel_signal_sender),
         }
-    }
-
-    pub fn save_snapshot(&mut self) {
-        let now = OffsetDateTime::now_utc();
-        let delta = now - self.last_snapshot_time;
-        let duration_secs = delta.whole_seconds() as f64;
-
-        let snapshot = StationSnapshot {
-            name: self.manifest.title.clone(),
-            created_on: now,
-            duration_secs,
-        };
-        self.snapshots.push(snapshot);
-
-        self.last_snapshot_time = now;
     }
 }
 
