@@ -1,4 +1,4 @@
-use std::sync::mpsc::channel;
+use std::sync::mpsc::sync_channel;
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
@@ -10,7 +10,8 @@ use rocket::{
     response::{content::RawHtml, stream::ByteStream},
 };
 use station::station::Station;
-use track::track::{StationManifest, Track};
+use station::station_state::StationState;
+use track::track::StationManifest;
 
 use std::{
     fs::File,
@@ -60,7 +61,7 @@ fn get_stations() -> &'static str {
 
 #[get("/station")]
 fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
-    let station = state.get("RadioZero").unwrap(); // ou diamondcityradio, se for o nome certo
+    let station = state.get("RadioZero").unwrap();
     let stream = station
         .cytoplasm
         .output_streams
@@ -75,7 +76,7 @@ fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
-        let (track_tx, track_rx) = channel::<Track>();
+        let (state_tx, state_rx) = sync_channel::<StationState>(0);
         let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
             .join("stations")
             .join(station_id);
@@ -83,8 +84,8 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], track_rx);
-        let station = Station::new(station_base_dir, manifest, cytoplasm, track_tx);
+        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], state_rx);
+        let station = Station::new(station_base_dir, manifest, cytoplasm, state_tx);
 
         stations.insert(station_id.to_owned(), station);
     }

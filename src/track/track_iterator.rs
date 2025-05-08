@@ -1,78 +1,62 @@
-// estrutura para armazenamento de estado anterior da estação
+use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
+use rand::SeedableRng;
+use std::collections::HashSet;
 
 use super::track::Track;
-use rand::seq::SliceRandom;
-use rand::{SeedableRng, Rng};
-use rand::rngs::StdRng;
-use core::result::Result;
 
+/// Iterador que reproduz trilhas de uma lista de forma aleatória, sem repetição dentro de cada ciclo.
+/// O iterador garante que cada trilha seja reproduzida apenas uma vez por ciclo, e ao final do ciclo,
+/// as trilhas são reembaralhadas para começar novamente.
 pub struct TrackIterator {
-    track: Track,
-    track_queue: Vec<Track>,
-    current_index: usize,
-    _rng: StdRng,
-
+    tracks: Vec<Track>,
+    indices: Vec<usize>,
+    used_indices: HashSet<usize>,
+    rng: StdRng,
 }
 
 impl TrackIterator {
-    pub fn new(mut track_queue: Vec<Track>, seed: u64) -> Self {
-
-        TrackIterator::shuffle_vec(&mut track_queue, seed);
-
-        let track = track_queue[0].clone();
-        track_queue.remove(0);
-
-        let _rng = StdRng::seed_from_u64(seed);
+    pub fn new(all_tracks: Vec<Track>, seed: u64) -> Self {
+        let mut rng = StdRng::seed_from_u64(seed);
+        let mut indices: Vec<usize> = (0..all_tracks.len()).collect();
+        indices.shuffle(&mut rng);
 
         TrackIterator {
-            track,
-            track_queue,
-            current_index: 0,
-            _rng
+            tracks: all_tracks,
+            indices,
+            used_indices: HashSet::new(),
+            rng,
         }
     }
+}
 
-    pub fn has_more(&self) -> bool {
-        !self.track_queue.is_empty()
-    }
+impl Iterator for TrackIterator {
+    type Item = Track;
 
-    pub fn go_next(&mut self) -> Result<(), &'static str> {
-        let nx_track = self.get_next()?;
-        self.track = nx_track;
-        Ok(())
-    }
-    
-    pub fn get_next(&mut self) -> Result<Track, &'static str> {
-        if !self.has_more() {
-            return Err("No more tracks to play");
+    /// Retorna a próxima trilha a ser reproduzida.
+    ///
+    /// O método garante que nenhuma trilha seja repetida dentro do mesmo ciclo, e reembaralha as trilhas
+    /// automaticamente após todas terem sido reproduzidas.
+    fn next(&mut self) -> Option<Self::Item> {
+        // se nenhum índice estiver disponível, reembaralhar e zerar a lista de usados
+        if self.used_indices.is_empty() {
+            self.indices.shuffle(&mut self.rng);
+            self.used_indices.clear();
         }
-    
-        self.shuffle();
-        let next_index = self.pick_next();
-    
-        // Usando clone para obter um valor owned
-        let nx_track = self.track_queue[next_index].clone();
-        self.track_queue.remove(next_index);
-        Ok(nx_track)
-    }
 
-    fn shuffle(&mut self) {
-        self.track_queue.shuffle(&mut self._rng);
-    }
+        // encontrar um índice não usado
+        let mut picked_idx = None;
+        for &idx in &self.indices {
+            if !self.used_indices.contains(&idx) {
+                picked_idx = Some(idx);
+                break;
+            }
+        }
 
-    fn pick_next(&mut self) -> usize {
-        let next_index = self._rng.random_range(0..self.track_queue.len());
-        self.current_index = next_index;
-        next_index
-    }
+        // se nenhum índice não usado for encontrado (não deve acontecer), retornar None
+        let picked_idx = picked_idx?;
+        self.used_indices.insert(picked_idx);
 
-    pub fn get_current(&self) -> &Track {
-        &self.track
-    }
-
-    pub fn shuffle_vec(vec: &mut Vec<Track>, seed: u64) {
-        let mut rng = StdRng::seed_from_u64(seed);
-
-        vec.shuffle(&mut rng)
+        Some(self.tracks[picked_idx].clone())
     }
 }
