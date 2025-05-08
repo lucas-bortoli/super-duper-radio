@@ -1,19 +1,24 @@
 use rocket::time::OffsetDateTime;
 use std::sync::mpsc::SyncSender;
+use std::sync::Arc;
 use std::{path::PathBuf, thread};
 use tokio::sync::oneshot;
 
+use crate::station::metadata_output_stream::Metadata;
 use crate::{
     cytoplasm::cytoplasm::Cytoplasm,
     track::{track::StationManifest, track_iterator::TrackIterator},
 };
 
+use super::metadata_output_stream::{self, MetadataOutputStream};
 use super::{station_snapshot::StationSnapshot, station_state::StationState};
 
 pub struct Station {
     pub base_dir: PathBuf,
     pub manifest: StationManifest,
     pub cytoplasm: Cytoplasm,
+
+    pub metadata_stream: Arc<MetadataOutputStream>,
 
     pub state: StationState,
     pub snapshots: Vec<StationSnapshot>,
@@ -31,8 +36,10 @@ impl Station {
     ) -> Station {
         let now = OffsetDateTime::now_utc();
 
-        let state_thread_manifest = manifest.clone();
+        let metadata_stream = Arc::new(MetadataOutputStream::new());
 
+        let state_thread_metadata_stream = metadata_stream.clone();
+        let state_thread_manifest = manifest.clone();
         let (cancel_signal_sender, mut cancel_signal_receiver) = oneshot::channel::<bool>();
         thread::spawn(move || {
             let mut iterator = TrackIterator::new(
@@ -54,6 +61,7 @@ impl Station {
                 state_tx
                     .send(current_state.clone())
                     .expect("falha ao transmitir estado atual");
+                eprintln!("station: current state {}", current_state);
 
                 // determinar próximo estado
                 let next_state;
@@ -66,14 +74,20 @@ impl Station {
                     }
                     StationState::Narration => unimplemented!(),
                     StationState::Track { track: _ } => {
+                        let picked_track = iterator.next().unwrap();
+
                         next_state = StationState::Track {
-                            track: iterator.next().unwrap(),
-                        }
+                            track: picked_track.clone(),
+                        };
+
+                        // notificar clientes do estado atual
+                        state_thread_metadata_stream.push(Metadata::TrackChange {
+                            title: picked_track.title,
+                            artist: picked_track.artist,
+                        });
                     }
                     StationState::Ended => break 'state_loop,
                 }
-
-                eprintln!("Station: {} -> {}", current_state, next_state);
 
                 current_state = next_state;
             }
@@ -83,6 +97,7 @@ impl Station {
             base_dir,
             manifest,
             cytoplasm,
+            metadata_stream,
             state: StationState::Initial,
             snapshots: Vec::new(),
             last_snapshot_time: now,
