@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    input_decoder::input_audio_file::{self, AudioPacket},
+    input_decoder::{AudioPacket, InputFile},
     output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
     station::station_state::StationState,
@@ -82,7 +82,7 @@ impl Cytoplasm {
                             let file_path = track.file_info.location.to_str().unwrap().to_string();
                             eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
 
-                            let mut file = input_audio_file::open_input_file_strategy(file_path);
+                            let mut file = InputFile::new(file_path);
                             for packet in &mut file {
                                 let mut buf = buffer.lock().unwrap();
                                 if buf.len() >= SETPOINT_HIGH {
