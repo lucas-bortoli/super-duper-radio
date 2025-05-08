@@ -135,6 +135,7 @@ const inventoryItems = [
     ["VaultLady", () => setBackground("./backgrounds/ladyfalloutpipboywallpaper.jpeg")],
     ["VaultBoy", () => setBackground("./backgrounds/wallpaperpipboy.jpeg")],
     ["Nuka-Cola", () => setBackground("./backgrounds/nukacolaladywallpaper.jpeg")],
+    ["Nuka-Cola", () => setBackground("./backgrounds/nukacolaladywallpaper.jpeg")],
     ["Chave da Vault 111", null],
 ];
 

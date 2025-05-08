@@ -231,9 +231,54 @@ audio {
   justify-content: center;
   align-items: center;
 }
+
 .map-container img {
   width: 100%;
   height: auto;
   cursor: grab;
   touch-action: none;
+}
+
+.data-tab {
+  display: flex;
+  font-family: monospace;
+  color: #00ff00;
+  height: 100%;
+  gap: 1rem;
+}
+
+.data-left ul,
+.data-right ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.data-left {
+  flex: 1;
+}
+
+.data-left li {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+
+.data-left li.active {
+  background-color: #00ff00;
+  color: #000;
+}
+
+.data-right {
+  flex: 2;
+}
+
+.data-right li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px dotted #00ff00;
+}
+
+.data-right span {
+  font-weight: bold;
 }
