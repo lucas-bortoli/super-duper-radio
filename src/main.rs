@@ -6,6 +6,7 @@ use cytoplasm::cytoplasm::Cytoplasm;
 use output_encoder::audio_encoder::OutputCodec;
 use rocket::response::stream::EventStream;
 use rocket::{
+    fs::{relative, FileServer},
     http::ContentType,
     response::{content::RawHtml, stream::ByteStream},
 };
@@ -23,12 +24,32 @@ pub mod track;
 #[macro_use]
 extern crate rocket;
 
+type StationMap = HashMap<String, Station>;
+
 #[get("/")]
 fn index() -> RawHtml<&'static [u8]> {
-    return RawHtml(b"<!DOCTYPE html>\n<audio controls src='/station'>");
+    RawHtml(include_bytes!("ui/ui.html"))
 }
 
-type StationMap = HashMap<String, Station>;
+#[get("/ui.css")]
+fn stylesheet() -> (ContentType, &'static [u8]) {
+    (ContentType::CSS, include_bytes!("ui/ui.css"))
+}
+
+#[get("/app.js")]
+fn javascript() -> (ContentType, &'static [u8]) {
+    (ContentType::JavaScript, include_bytes!("ui/app.js"))
+}
+
+#[get("/favicon.ico")]
+fn favicon() -> (ContentType, &'static [u8]) {
+    (ContentType::Icon, include_bytes!("ui/favicon.ico"))
+}
+
+#[get("/get_stations")]
+fn get_stations() -> &'static str {
+    "Retorna a lista de estacoes ativas no momento!"
+}
 
 #[get("/station")]
 fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
@@ -64,14 +85,27 @@ fn rocket() -> _ {
             .expect("falha ao interpretar manifesto da estação");
 
         let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], state_rx);
-
         let station = Station::new(station_base_dir, manifest, cytoplasm, state_tx);
 
         stations.insert(station_id.to_owned(), station);
     }
 
-    rocket::build().manage(stations).mount(
-        "/",
-        routes![index, station_endpoint, station_event_endpoint],
-    )
+    rocket::build()
+        .manage(stations)
+        .mount(
+            "/",
+            routes![
+                index,
+                stylesheet,
+                javascript,
+                favicon,
+                get_stations,
+                station_endpoint,
+                station_event_endpoint
+            ],
+        )
+        .mount(
+            "/backgrounds",
+            FileServer::from(relative!("src/ui/backgrounds")),
+        )
 }

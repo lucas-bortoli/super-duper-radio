@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="ui.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <title>Pip-Boy</title>
+</head>
+
+<body>
+  <div class="screen">
+    <nav>
+      <span data-tab="stat">Stat</span>
+      <span data-tab="inv">Inv</span>
+      <span data-tab="data">Data</span>
+      <span data-tab="map">Map</span>
+      <span data-tab="radio" class="active">Radio</span>
+    </nav>
+
+    <div class="tab-content" id="stat-tab" hidden>
+      <img src="./backgrounds/pipboystat.gif" alt="Status Animation" class="stat-img" />
+    </div>
+
+    <div class="tab-content" id="inv-tab" hidden>
+      <p class="tab-header">Wallpapers</p>
+      <ul class="inventory-list"></ul>
+    </div>
+
+    <div class="tab-content" id="data-tab" hidden>
+      <div class="data-tab">
+        <div class="data-left">
+          <ul>
+            <li class="active">General</li>
+            <li>Quest</li>
+            <li>Combat</li>
+            <li>Crafting</li>
+            <li>Crime</li>
+          </ul>
+        </div>
+        <div class="data-right">
+          <ul>
+            <li>People Killed <span>0</span></li>
+            <li>Animals Killed <span>0</span></li>
+            <li>Creatures Killed <span>57</span></li>
+            <li>Robots Killed <span>0</span></li>
+            <li>Synths Killed <span>248</span></li>
+            <li>Turrets Killed <span>81</span></li>
+            <li>Legendary Enemies Killed <span>6</span></li>
+            <li>Critical Strikes <span>0</span></li>
+            <li>Sneak Attacks <span>34</span></li>
+            <li>Backstabs <span>22</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="tab-content" id="map-tab" hidden>
+      <div class="map-container">
+        <img src="./backgrounds/fallout-map.png" alt="Mapa" />
+      </div>
+    </div>
+
+
+    <div class="tab-content" id="radio-tab">
+      <ul class="station-list"></ul>
+      <canvas id="wave-canvas" width="128" height="64"></canvas>
+      <audio controls></audio>
+    </div>
+    <footer></footer>
+  </div>
+
+  <script src="https://unpkg.com/@panzoom/panzoom/dist/panzoom.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
