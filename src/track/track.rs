@@ -1,19 +1,19 @@
+use super::audio_file_info::AudioFileInfo;
+use crate::track::audio_file_info;
+use serde::Deserialize;
 use std::{
     error::Error,
     fs::{self},
     path::PathBuf,
 };
 
-use serde::Deserialize;
-
-use crate::track::audio_file_info;
-
-use super::audio_file_info::AudioFileInfo;
-
 #[derive(Clone, Deserialize, Debug)]
 pub struct Narration {
     pub source: String,
     pub transcript: String,
+
+    #[serde(skip_deserializing)]
+    pub file_info: AudioFileInfo,
 }
 
 #[derive(Clone, Deserialize, Debug)]

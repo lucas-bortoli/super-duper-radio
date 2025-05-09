@@ -15,6 +15,7 @@ use station::station_state::StationState;
 use track::track::StationManifest;
 
 pub mod cytoplasm;
+pub mod id_gen;
 pub mod input_decoder;
 pub mod output_encoder;
 pub mod output_stream;

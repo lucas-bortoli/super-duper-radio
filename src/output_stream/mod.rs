@@ -13,9 +13,12 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::output_encoder::{
-    audio_encoder::OutputCodec,
-    null_frames::{get_mime_type, get_null_frame},
+use crate::{
+    id_gen::{generate_id, UniqueId},
+    output_encoder::{
+        audio_encoder::OutputCodec,
+        null_frames::{get_mime_type, get_null_frame},
+    },
 };
 
 /// guarda as info de cada cliente conectado
@@ -31,9 +34,7 @@ pub struct OutputStream {
     // canal pra distribuir o audio pros clients
     tx: tbroadcast::Sender<Bytes>,
     // mapa de clientes ativos
-    clients: Arc<Mutex<HashMap<usize, ClientInfo>>>,
-    // gera os IDs únicos pros clients
-    next_id: AtomicUsize,
+    clients: Arc<Mutex<HashMap<UniqueId, ClientInfo>>>,
 }
 
 impl OutputStream {
@@ -46,7 +47,6 @@ impl OutputStream {
             codec,
             tx,
             clients: Arc::new(Mutex::new(HashMap::new())),
-            next_id: AtomicUsize::new(0),
         }
     }
 
@@ -96,8 +96,8 @@ impl OutputStream {
 
     /// Cria um novo stream de audio pra um cliente
     pub fn create_consumer_http_stream(&self) -> (ContentType, ByteStream![Bytes]) {
-        // pega um ID novo pro cliente
-        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        let this_id = generate_id();
+
         // canal pra mandar o sinal de desligar
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
         // contador de bytes enviados
@@ -105,7 +105,7 @@ impl OutputStream {
 
         // registra o cliente no mapa
         self.clients.lock().unwrap().insert(
-            id,
+            this_id,
             ClientInfo {
                 shutdown_tx,
                 bytes_sent: Arc::clone(&bytes_sent),
@@ -146,7 +146,7 @@ impl OutputStream {
         // cria um guard pra esse stream, executado quando a stream deve ser droppada
         let guard = CleanupGuard {
             clients,
-            id,
+            id: this_id,
             exit_flag: exit_flag.clone(),
             bytes_sent: Arc::clone(&bytes_sent),
         };
@@ -163,7 +163,7 @@ impl OutputStream {
             yield null_frame;
             eprintln!(
                 "server({}): mandou frame null ({} bytes) para o cliente",
-                id, null_size
+                this_id, null_size
             );
 
             'receive: loop {
@@ -180,19 +180,19 @@ impl OutputStream {
                                 RecvError::Lagged(n) => {
                                     eprintln!(
                                         "server({}): cliente ficou {} mensagens atrasado - skip!",
-                                        id, n
+                                        this_id, n
                                     );
                                 },
 
                                 // isso ocorre quando não há mais Sender para o canal, mas jamais deverá ocorrer na aplicação, já que as estações são permanentes e singletons
                                 RecvError::Closed =>
-                                    panic!("server({}): o canal de broadcast fechou do nada!", id)
+                                    panic!("server({}): o canal de broadcast fechou do nada!", this_id)
                             },
                         }
                     }
                     // aguardar o sinal de desligar
                     _ = &mut shutdown_rx => {
-                        eprintln!("server({}): sinal de shutdown para o cliente", id);
+                        eprintln!("server({}): sinal de shutdown para o cliente", this_id);
                         break 'receive;
                     }
                 }
@@ -203,7 +203,7 @@ impl OutputStream {
             let total_bytes = bytes_sent.load(Ordering::Relaxed);
             eprintln!(
                 "server({}): stream cliente acabou ({} bytes no total)",
-                id, total_bytes
+                this_id, total_bytes
             );
         };
 
