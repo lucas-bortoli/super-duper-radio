@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{mpsc::Receiver, Arc, Mutex},
+    sync::{Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
 };
@@ -9,7 +9,11 @@ use crate::{
     input_decoder::{AudioPacket, InputFile},
     output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
-    station::station_state::StationState,
+    station::{
+        metadata_output_stream::{Metadata, MetadataOutputStream},
+        station_state::StationState,
+    },
+    track::track::StationManifest,
 };
 
 const BACKPRESSURE_DELAY: Duration = Duration::from_millis(5);
@@ -17,17 +21,24 @@ const SETPOINT_HIGH: usize = 10;
 const SETPOINT_LOW: usize = 5;
 
 pub struct Cytoplasm {
+    pub manifest: StationManifest,
     pub encoders: Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>>,
     pub output_streams: Arc<HashMap<OutputCodec, Arc<OutputStream>>>,
+    pub output_metadata_stream: Arc<MetadataOutputStream>,
 }
 
 impl Cytoplasm {
-    pub fn new(output_codecs: &[OutputCodec], state_rx: Receiver<StationState>) -> Cytoplasm {
+    pub fn new(manifest: StationManifest, output_codecs: &[OutputCodec]) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
+        let output_metadata_stream = Arc::new(MetadataOutputStream::new());
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
-        Self::init_decoder_thread(buffer.clone(), state_rx);
+        Self::init_decoder_thread(
+            manifest.clone(),
+            buffer.clone(),
+            output_metadata_stream.clone(),
+        );
         Self::init_encoder_thread(encoders.clone(), buffer.clone());
 
         let output_streams_arc = Arc::new(output_streams);
@@ -35,7 +46,9 @@ impl Cytoplasm {
         Self::init_reporting_thread(output_streams_arc.clone());
 
         return Cytoplasm {
+            manifest,
             output_streams: output_streams_arc,
+            output_metadata_stream,
             encoders,
         };
     }
@@ -68,42 +81,43 @@ impl Cytoplasm {
     /// inicia a thread responsável por decodificar arquivos de áudio
     /// ela carrega trilhas conforme recebidas e enfileira pacotes no buffer compartilhado
     fn init_decoder_thread(
+        manifest: StationManifest,
         buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
-        state_rx: Receiver<StationState>,
+        metadata_stream: Arc<MetadataOutputStream>,
     ) {
-        thread::spawn(move || 'decoder: {
-            loop {
-                eprintln!("cytoplasm/d: aguardando próximo estado da estação...");
+        thread::spawn(move || loop {
+            eprintln!("cytoplasm/d: aguardando próximo estado da estação...");
 
-                match state_rx.recv() {
-                    Ok(current_state) => match current_state {
-                        StationState::Initial => continue, // estação ainda está inicializando, ignorar
-                        StationState::Track { track } => {
-                            let file_path = track.file_info.location.to_str().unwrap().to_string();
-                            eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
+            let (current_state, elapsed) =
+                StationState::determine_expected_state(manifest.tracks.clone(), manifest.seed);
+            match current_state {
+                StationState::SwitchTrack => continue, // estação ainda está inicializando, ignorar
+                StationState::NarrationBefore { related_track: _ } => todo!(),
+                StationState::Track { track } => {
+                    metadata_stream.push(Metadata::TrackChange {
+                        title: track.title,
+                        artist: track.artist,
+                    });
 
-                            let mut file = InputFile::new(file_path);
-                            for packet in &mut file {
-                                let mut buf = buffer.lock().unwrap();
-                                if buf.len() >= SETPOINT_HIGH {
-                                    drop(buf);
-                                    while buffer.lock().unwrap().len() > SETPOINT_LOW {
-                                        thread::sleep(BACKPRESSURE_DELAY);
-                                    }
-                                    buffer.lock().unwrap().push_back(packet);
-                                } else {
-                                    buf.push_back(packet);
-                                }
+                    let file_path = track.file_info.location.to_str().unwrap().to_string();
+                    eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
+
+                    let mut file = InputFile::new(file_path, elapsed);
+                    for packet in &mut file {
+                        let mut buf = buffer.lock().unwrap();
+                        if buf.len() >= SETPOINT_HIGH {
+                            drop(buf);
+                            while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                                thread::sleep(BACKPRESSURE_DELAY);
                             }
+                            buffer.lock().unwrap().push_back(packet);
+                        } else {
+                            buf.push_back(packet);
                         }
-                        StationState::Narration => continue, // TODO: play narration
-                        StationState::Ended => break 'decoder,
-                    },
-                    Err(_) => break,
+                    }
                 }
+                StationState::NarrationAfter { related_track: _ } => todo!(),
             }
-
-            eprintln!("cytoplasm/d: thread finalizando")
         });
     }
 

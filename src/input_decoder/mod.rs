@@ -29,7 +29,7 @@ pub struct InputFile {
 }
 
 impl InputFile {
-    pub fn new(file_path: String) -> InputFile {
+    pub fn new(file_path: String, seek_ms: u64) -> InputFile {
         let mut child = Command::new("ffmpeg")
             .args(&[
                 "-i",

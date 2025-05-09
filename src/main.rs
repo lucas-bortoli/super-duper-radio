@@ -1,4 +1,3 @@
-use std::sync::mpsc::sync_channel;
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
@@ -10,8 +9,6 @@ use rocket::{
     http::ContentType,
     response::{content::RawHtml, stream::ByteStream},
 };
-use station::station::Station;
-use station::station_state::StationState;
 use track::track::StationManifest;
 
 pub mod cytoplasm;
@@ -25,7 +22,7 @@ pub mod track;
 #[macro_use]
 extern crate rocket;
 
-type StationMap = HashMap<String, Station>;
+type StationMap = HashMap<String, Cytoplasm>;
 
 #[get("/")]
 fn index() -> RawHtml<&'static [u8]> {
@@ -56,7 +53,6 @@ fn get_stations() -> &'static str {
 fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
     let station = state.get("RadioZero").unwrap();
     let stream = station
-        .cytoplasm
         .output_streams
         .get(&OutputCodec::Mp3_64kbps)
         .unwrap();
@@ -67,7 +63,7 @@ fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStre
 #[get("/station/events")]
 fn station_event_endpoint(state: &rocket::State<StationMap>) -> EventStream![] {
     let station = state.get("RadioZero").unwrap();
-    let stream = station.metadata_stream.clone();
+    let stream = station.output_metadata_stream.clone();
 
     stream.create_consumer_sse_stream()
 }
@@ -77,7 +73,6 @@ fn rocket() -> _ {
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
-        let (state_tx, state_rx) = sync_channel::<StationState>(0);
         let station_base_dir = Path::new(env::current_dir().unwrap().to_str().unwrap())
             .join("stations")
             .join(station_id);
@@ -85,10 +80,9 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let cytoplasm = Cytoplasm::new(&[OutputCodec::Mp3_64kbps], state_rx);
-        let station = Station::new(station_base_dir, manifest, cytoplasm, state_tx);
+        let cytoplasm = Cytoplasm::new(manifest, &[OutputCodec::Mp3_64kbps]);
 
-        stations.insert(station_id.to_owned(), station);
+        stations.insert(station_id.to_owned(), cytoplasm);
     }
 
     rocket::build()

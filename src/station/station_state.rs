@@ -1,99 +1,85 @@
-use super::metadata_output_stream::MetadataOutputStream;
-use crate::{
-    station::metadata_output_stream::Metadata,
-    track::{
-        track::{StationManifest, Track},
-        track_iterator::TrackIterator,
-    },
-};
+use crate::track::{track::Track, track_iterator::TrackIterator};
+use frand::Rand;
 use std::{
     fmt::Display,
-    sync::{mpsc::SyncSender, Arc},
-    thread,
+    time::{SystemTime, UNIX_EPOCH},
 };
-use tokio::sync::oneshot;
 
 #[derive(Clone, Debug)]
 pub enum StationState {
-    Initial,
+    SwitchTrack,
+    NarrationBefore { related_track: Track },
     Track { track: Track },
-    Narration,
-    Ended,
+    NarrationAfter { related_track: Track },
 }
 
 impl StationState {
     pub fn name(&self) -> &'static str {
         match self {
-            StationState::Initial => "Initial",
+            StationState::SwitchTrack => "SwitchTrack",
+            StationState::NarrationBefore { related_track: _ } => "NarrationBefore",
             StationState::Track { track: _ } => "Track",
-            StationState::Narration => "Narration",
-            StationState::Ended => "Ended",
+            StationState::NarrationAfter { related_track: _ } => "NarrationAfter",
         }
     }
 
-    pub fn spawn_state_thread(
-        manifest: StationManifest,
-        mut cancel_rx: oneshot::Receiver<bool>,
-        state_tx: SyncSender<StationState>,
-        metadata_stream: Arc<MetadataOutputStream>,
-    ) {
-        thread::spawn(move || {
-            let mut iterator = TrackIterator::new(manifest.tracks.clone(), manifest.seed);
-            let mut current_state = StationState::Initial;
+    pub fn determine_expected_state(tracks: Vec<Track>, seed: u64) -> (StationState, u64) {
+        assert!(tracks.len() != 0, "track list is empty");
 
-            'state_loop: loop {
-                // recebemos o sinal de parada?
-                match cancel_rx.try_recv() {
-                    Ok(_) => break 'state_loop,
-                    Err(oneshot::error::TryRecvError::Closed) => break 'state_loop,
-                    _ => {}
-                }
+        const STATION_EPOCH: u64 = 1746794077052; // millis
+        let current_time_unix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64;
 
-                // notificar citoplasma do estado atual
-                state_tx
-                    .send(current_state.clone())
-                    .expect("falha ao transmitir estado atual");
-                eprintln!("station: current state {}", current_state);
+        let mut rng = Rand::with_seed(seed);
+        let mut current_state = StationState::SwitchTrack;
+        let mut elapsed = current_time_unix.saturating_sub(STATION_EPOCH);
 
-                // determinar próximo estado
-                let next_state;
+        let mut iterator = TrackIterator::new(tracks);
 
-                match current_state {
-                    StationState::Initial => {
-                        next_state = StationState::Track {
-                            track: iterator.next().unwrap(),
-                        }
-                    }
-                    StationState::Narration => unimplemented!(),
-                    StationState::Track { track: _ } => {
-                        let picked_track = iterator.next().unwrap();
+        loop {
+            let current_step_duration = match &current_state {
+                StationState::SwitchTrack => 0,
+                StationState::NarrationBefore { related_track: _ } => 0,
+                StationState::Track { track } => track.file_info.audio_milliseconds,
+                StationState::NarrationAfter { related_track: _ } => 0,
+            };
 
-                        next_state = StationState::Track {
-                            track: picked_track.clone(),
-                        };
-
-                        // notificar clientes do estado atual
-                        metadata_stream.push(Metadata::TrackChange {
-                            title: picked_track.title,
-                            artist: picked_track.artist,
-                        });
-                    }
-                    StationState::Ended => break 'state_loop,
-                }
-
-                current_state = next_state;
+            if current_step_duration >= elapsed {
+                // the current step couldn't be run to completion; in this case, "elapsed" means how further in it is in the current state
+                break;
             }
-        });
+
+            elapsed -= current_step_duration;
+
+            current_state = match &current_state {
+                StationState::SwitchTrack => {
+                    let track = iterator.next(&mut rng).unwrap();
+                    assert!(
+                        track.file_info.audio_milliseconds != 0,
+                        "track {} has zero duration",
+                        track.title
+                    );
+                    StationState::Track { track }
+                }
+                StationState::NarrationBefore { related_track: _ } => todo!(),
+                StationState::Track { track: _ } => StationState::SwitchTrack,
+                StationState::NarrationAfter { related_track: _ } => todo!(),
+            };
+        }
+
+        (current_state, elapsed)
     }
 }
 
 impl Display for StationState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            StationState::Initial => write!(f, "Initial"),
+            StationState::SwitchTrack => write!(f, "SwitchTrack"),
+            StationState::NarrationBefore { related_track: _ } => write!(f, "NarrationBefore"),
             StationState::Track { track } => write!(f, "Track[{}]", track.title),
-            StationState::Narration => write!(f, "Narration"),
-            StationState::Ended => write!(f, "Ended"),
+            StationState::NarrationAfter { related_track: _ } => write!(f, "NarrationAfter"),
         }
     }
 }
