@@ -6,9 +6,10 @@ use std::{
     thread,
 };
 
-use crate::output_stream::OutputStream;
-
-use super::decoder::{self, AudioPacket};
+use super::{
+    decoder::{self, AudioPacket},
+    output_stream::audio_stream::AudioStream,
+};
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum OutputCodec {
@@ -25,7 +26,7 @@ pub struct AudioEncoder {
 }
 
 impl AudioEncoder {
-    pub fn new(output_codec: &OutputCodec, output: Arc<OutputStream>) -> AudioEncoder {
+    pub fn new(output_codec: &OutputCodec, output: Arc<AudioStream>) -> AudioEncoder {
         let args: Vec<String> = AudioEncoder::ffmpeg_args(&output_codec);
 
         println!("encoder: parâmetros ffmpeg: {:?}", args);

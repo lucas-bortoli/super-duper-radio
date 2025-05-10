@@ -7,35 +7,35 @@ use std::{
 
 use decoder::{AudioPacket, InputFile};
 use encoder::{AudioEncoder, OutputCodec};
-
-use crate::{
-    output_stream::OutputStream,
-    station::{
-        metadata_output_stream::{Metadata, MetadataOutputStream},
-        station_state::StationState,
-    },
-    track::track::StationManifest,
+use output_stream::{
+    audio_stream::AudioStream,
+    metadata_stream::{Metadata, MetadataStream},
 };
+use state::State;
+
+use crate::track::track::StationManifest;
 
 pub mod decoder;
 pub mod encoder;
+pub mod output_stream;
+pub mod state;
 
 const BACKPRESSURE_DELAY: Duration = Duration::from_millis(5);
-const SETPOINT_HIGH: usize = 10;
-const SETPOINT_LOW: usize = 5;
+const SETPOINT_HIGH: usize = 20;
+const SETPOINT_LOW: usize = 10;
 
 pub struct Cytoplasm {
     pub manifest: StationManifest,
     pub encoders: Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>>,
-    pub output_streams: Arc<HashMap<OutputCodec, Arc<OutputStream>>>,
-    pub output_metadata_stream: Arc<MetadataOutputStream>,
+    pub output_streams: Arc<HashMap<OutputCodec, Arc<AudioStream>>>,
+    pub output_metadata_stream: Arc<MetadataStream>,
 }
 
 impl Cytoplasm {
     pub fn new(manifest: StationManifest, output_codecs: &[OutputCodec]) -> Cytoplasm {
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
-        let output_metadata_stream = Arc::new(MetadataOutputStream::new());
+        let output_metadata_stream = Arc::new(MetadataStream::new());
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
         Self::init_decoder_thread(
@@ -57,11 +57,11 @@ impl Cytoplasm {
         };
     }
 
-    fn init_output_streams(codecs: &[OutputCodec]) -> HashMap<OutputCodec, Arc<OutputStream>> {
+    fn init_output_streams(codecs: &[OutputCodec]) -> HashMap<OutputCodec, Arc<AudioStream>> {
         let mut streams = HashMap::new();
 
         for codec in codecs {
-            let stream = OutputStream::new(codec.clone());
+            let stream = AudioStream::new(codec.clone());
             streams.insert(codec.clone(), Arc::new(stream));
         }
 
@@ -71,7 +71,7 @@ impl Cytoplasm {
     /// cria e inicializa um encoder de áudio para cada codec de saída solicitado
     fn init_encoders(
         codecs: &[OutputCodec],
-        streams: &HashMap<OutputCodec, Arc<OutputStream>>,
+        streams: &HashMap<OutputCodec, Arc<AudioStream>>,
     ) -> Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>> {
         let mut encoders = HashMap::new();
         for codec in codecs {
@@ -87,7 +87,7 @@ impl Cytoplasm {
     fn init_decoder_thread(
         manifest: StationManifest,
         buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
-        metadata_stream: Arc<MetadataOutputStream>,
+        metadata_stream: Arc<MetadataStream>,
     ) {
         thread::spawn(move || loop {
             eprintln!("cytoplasm/d: aguardando próximo estado da estação...");
@@ -108,14 +108,14 @@ impl Cytoplasm {
             }
 
             let (current_state, elapsed) =
-                StationState::determine_expected_state(manifest.tracks.clone(), manifest.seed);
+                State::determine_expected_state(manifest.tracks.clone(), manifest.seed);
 
             eprintln!("cytoplasm/d: current state: {}", current_state);
 
             match current_state {
-                StationState::SwitchTrack => continue, // estação ainda está inicializando, ignorar
-                StationState::NarrationBefore { related_track: _ } => todo!(),
-                StationState::Track { track } => {
+                State::SwitchTrack => continue, // estação ainda está inicializando, ignorar
+                State::NarrationBefore { related_track: _ } => todo!(),
+                State::Track { track } => {
                     metadata_stream.push(Metadata::TrackChange {
                         title: track.title,
                         artist: track.artist,
@@ -124,7 +124,7 @@ impl Cytoplasm {
                     let file = InputFile::new(track.file_info.location, elapsed);
                     play_audio_blocking(file, buffer.clone());
                 }
-                StationState::NarrationAfter { related_track: _ } => todo!(),
+                State::NarrationAfter { related_track: _ } => todo!(),
             }
         });
     }
@@ -197,7 +197,7 @@ impl Cytoplasm {
         });
     }
 
-    fn init_reporting_thread(streams: Arc<HashMap<OutputCodec, Arc<OutputStream>>>) {
+    fn init_reporting_thread(streams: Arc<HashMap<OutputCodec, Arc<AudioStream>>>) {
         thread::spawn(move || {
             let mut last_bytes = HashMap::new();
             let mut last_time = Instant::now();

@@ -14,11 +14,9 @@ use tokio::sync::{
 };
 
 use crate::{
-    cytoplasm::encoder::OutputCodec,
+    cytoplasm::{encoder::OutputCodec, output_stream::null_frames},
     id_gen::{generate_id, UniqueId},
 };
-
-mod null_frames;
 
 /// guarda as info de cada cliente conectado
 struct ClientInfo {
@@ -27,7 +25,7 @@ struct ClientInfo {
     connected_at: Instant,            // quando o cliente conectou
 }
 
-pub struct OutputStream {
+pub struct AudioStream {
     // codec de audio que a gente usa
     codec: OutputCodec,
     // canal pra distribuir o audio pros clients
@@ -36,13 +34,13 @@ pub struct OutputStream {
     clients: Arc<Mutex<HashMap<UniqueId, ClientInfo>>>,
 }
 
-impl OutputStream {
+impl AudioStream {
     /// cria um novo stream manager
-    pub fn new(codec: OutputCodec) -> OutputStream {
+    pub fn new(codec: OutputCodec) -> AudioStream {
         // canal com buffer de 24 mensagens
         // TODO: mexer nesse valor até ficar razoável. capacidade de 24 aguentou 301 clientes no meu PC
         let (tx, _) = tbroadcast::channel::<Bytes>(24);
-        OutputStream {
+        AudioStream {
             codec,
             tx,
             clients: Arc::new(Mutex::new(HashMap::new())),
@@ -207,7 +205,7 @@ impl OutputStream {
         };
 
         (
-            ContentType::new("audio", OutputStream::get_mime_type(&self.codec)),
+            ContentType::new("audio", AudioStream::get_mime_type(&self.codec)),
             stream,
         )
     }

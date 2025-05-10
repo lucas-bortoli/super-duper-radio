@@ -22,7 +22,8 @@ document.querySelectorAll("nav span").forEach((tab) => {
 });
 
 const stations = [
-    ["Diamond City Radio", "/station"],
+    ["Super Duper Radio (64 kbps)", "/station/64"],
+    ["Super Duper Radio (128 kbps)", "/station/128"],
     ["Distress Signal", null],
     ["Emergency Frequency RJ1138", null],
     ["Military Frequency AF95", null],

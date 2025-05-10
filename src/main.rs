@@ -13,8 +13,6 @@ use track::track::StationManifest;
 
 pub mod cytoplasm;
 pub mod id_gen;
-pub mod output_stream;
-pub mod station;
 pub mod track;
 
 #[macro_use]
@@ -47,12 +45,23 @@ fn get_stations() -> &'static str {
     "Retorna a lista de estacoes ativas no momento!"
 }
 
-#[get("/station")]
-fn station_endpoint(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
+#[get("/station/64")]
+fn station_endpoint_64(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
     let station = state.get("RadioZero").unwrap();
     let stream = station
         .output_streams
         .get(&OutputCodec::Mp3_64kbps)
+        .unwrap();
+
+    stream.create_consumer_http_stream()
+}
+
+#[get("/station/128")]
+fn station_endpoint_128(state: &rocket::State<StationMap>) -> (ContentType, ByteStream![Bytes]) {
+    let station = state.get("RadioZero").unwrap();
+    let stream = station
+        .output_streams
+        .get(&OutputCodec::Mp3_128kbps)
         .unwrap();
 
     stream.create_consumer_http_stream()
@@ -78,7 +87,10 @@ fn rocket() -> _ {
         let manifest = StationManifest::from_base_dir(station_base_dir.clone())
             .expect("falha ao interpretar manifesto da estação");
 
-        let cytoplasm = Cytoplasm::new(manifest, &[OutputCodec::Mp3_64kbps]);
+        let cytoplasm = Cytoplasm::new(
+            manifest,
+            &[OutputCodec::Mp3_64kbps, OutputCodec::Mp3_128kbps],
+        );
 
         stations.insert(station_id.to_owned(), cytoplasm);
     }
@@ -93,7 +105,8 @@ fn rocket() -> _ {
                 javascript,
                 favicon,
                 get_stations,
-                station_endpoint,
+                station_endpoint_64,
+                station_endpoint_128,
                 station_event_endpoint
             ],
         )

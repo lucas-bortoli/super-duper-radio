@@ -8,16 +8,16 @@ pub enum Metadata {
     TrackChange { title: String, artist: String },
 }
 
-pub struct MetadataOutputStream {
+pub struct MetadataStream {
     // canal pra distribuir o audio pros clients
     tx: tbroadcast::Sender<Metadata>,
 }
 
-impl MetadataOutputStream {
+impl MetadataStream {
     /// cria um novo stream manager
-    pub fn new() -> MetadataOutputStream {
+    pub fn new() -> MetadataStream {
         let (tx, _) = tbroadcast::channel::<Metadata>(4);
-        MetadataOutputStream { tx }
+        MetadataStream { tx }
     }
 
     /// Manda um pacote de metadados pra todos os clientes conectados
