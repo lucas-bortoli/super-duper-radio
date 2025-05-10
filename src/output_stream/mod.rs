@@ -14,12 +14,11 @@ use tokio::sync::{
 };
 
 use crate::{
+    cytoplasm::encoder::OutputCodec,
     id_gen::{generate_id, UniqueId},
-    output_encoder::{
-        audio_encoder::OutputCodec,
-        null_frames::{get_mime_type, get_null_frame},
-    },
 };
+
+mod null_frames;
 
 /// guarda as info de cada cliente conectado
 struct ClientInfo {
@@ -157,7 +156,7 @@ impl OutputStream {
             let _guard = guard;
 
             // manda o frame null inicial
-            let null_frame = Bytes::from(get_null_frame(&codec));
+            let null_frame = Bytes::from(null_frames::get_null_frame(&codec));
             let null_size = null_frame.len();
             bytes_sent.fetch_add(null_size, Ordering::Relaxed);
             yield null_frame;
@@ -208,8 +207,15 @@ impl OutputStream {
         };
 
         (
-            ContentType::new("audio", get_mime_type(&self.codec)),
+            ContentType::new("audio", OutputStream::get_mime_type(&self.codec)),
             stream,
         )
+    }
+
+    fn get_mime_type(codec: &OutputCodec) -> &'static str {
+        match codec {
+            OutputCodec::Mp3_64kbps => "mpeg",
+            OutputCodec::Mp3_128kbps => "mpeg",
+        }
     }
 }

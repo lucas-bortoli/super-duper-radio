@@ -1,13 +1,15 @@
 use std::{
     collections::{HashMap, VecDeque},
+    path::PathBuf,
     sync::{Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
 };
 
+use decoder::{AudioPacket, InputFile};
+use encoder::{AudioEncoder, OutputCodec};
+
 use crate::{
-    input_decoder::{AudioPacket, InputFile},
-    output_encoder::audio_encoder::{AudioEncoder, OutputCodec},
     output_stream::OutputStream,
     station::{
         metadata_output_stream::{Metadata, MetadataOutputStream},
@@ -15,6 +17,9 @@ use crate::{
     },
     track::track::StationManifest,
 };
+
+pub mod decoder;
+pub mod encoder;
 
 const BACKPRESSURE_DELAY: Duration = Duration::from_millis(5);
 const SETPOINT_HIGH: usize = 10;

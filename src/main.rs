@@ -1,8 +1,8 @@
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
+use cytoplasm::encoder::OutputCodec;
 use cytoplasm::Cytoplasm;
-use output_encoder::audio_encoder::OutputCodec;
 use rocket::response::stream::EventStream;
 use rocket::{
     fs::{relative, FileServer},
@@ -13,8 +13,6 @@ use track::track::StationManifest;
 
 pub mod cytoplasm;
 pub mod id_gen;
-pub mod input_decoder;
-pub mod output_encoder;
 pub mod output_stream;
 pub mod station;
 pub mod track;
