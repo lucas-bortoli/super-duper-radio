@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    path::PathBuf,
     sync::{Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
@@ -93,8 +92,26 @@ impl Cytoplasm {
         thread::spawn(move || loop {
             eprintln!("cytoplasm/d: aguardando próximo estado da estação...");
 
+            fn play_audio_blocking(file: InputFile, buffer: Arc<Mutex<VecDeque<AudioPacket>>>) {
+                for packet in file {
+                    let mut buf = buffer.lock().unwrap();
+                    if buf.len() >= SETPOINT_HIGH {
+                        drop(buf);
+                        while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                            thread::sleep(BACKPRESSURE_DELAY);
+                        }
+                        buffer.lock().unwrap().push_back(packet);
+                    } else {
+                        buf.push_back(packet);
+                    }
+                }
+            }
+
             let (current_state, elapsed) =
                 StationState::determine_expected_state(manifest.tracks.clone(), manifest.seed);
+
+            eprintln!("cytoplasm/d: current state: {}", current_state);
+
             match current_state {
                 StationState::SwitchTrack => continue, // estação ainda está inicializando, ignorar
                 StationState::NarrationBefore { related_track: _ } => todo!(),
@@ -104,22 +121,8 @@ impl Cytoplasm {
                         artist: track.artist,
                     });
 
-                    let file_path = track.file_info.location.to_str().unwrap().to_string();
-                    eprintln!("cytoplasm/d: abrindo arquivo: {}", file_path);
-
-                    let mut file = InputFile::new(file_path, elapsed);
-                    for packet in &mut file {
-                        let mut buf = buffer.lock().unwrap();
-                        if buf.len() >= SETPOINT_HIGH {
-                            drop(buf);
-                            while buffer.lock().unwrap().len() > SETPOINT_LOW {
-                                thread::sleep(BACKPRESSURE_DELAY);
-                            }
-                            buffer.lock().unwrap().push_back(packet);
-                        } else {
-                            buf.push_back(packet);
-                        }
-                    }
+                    let file = InputFile::new(track.file_info.location, elapsed);
+                    play_audio_blocking(file, buffer.clone());
                 }
                 StationState::NarrationAfter { related_track: _ } => todo!(),
             }

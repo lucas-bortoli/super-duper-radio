@@ -1,5 +1,6 @@
 use std::{
     io::{BufReader, Read},
+    path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
 };
 
@@ -23,17 +24,55 @@ pub struct AudioPacket {
     pub buffer: Bytes,
 }
 
+/// Converte um número de milissegundos em uma string de tempo formatada compatível com o parâmetro `-ss` do FFmpeg.
+///
+/// A string é formatada como `hh:mm:ss[.xxx]`, onde:
+/// - `hh` é o número de horas (omitido se for zero)
+/// - `mm` é o número de minutos (sempre com dois dígitos)
+/// - `ss` é o número de segundos (sempre com dois dígitos)
+/// - `.xxx` é o número de milissegundos representado como fração de segundo (até 6 dígitos)
+///
+/// # Argumentos
+///
+/// * `milliseconds` - Um número de milissegundos do tipo `u64`
+///
+/// # Retorna
+///
+/// * Uma `String` representando o tempo no formato `hh:mm:ss[.xxx]`, compatível com o parâmetro `-ss` do FFmpeg
+pub fn ffmeg_seek_time_arg_format(milliseconds: u64) -> String {
+    let hours = milliseconds / 3600000;
+    let remaining = milliseconds % 3600000;
+    let minutes = remaining / 60000;
+    let remaining = remaining % 60000;
+    let seconds = remaining / 1000;
+    let milliseconds = remaining % 1000;
+
+    let mut result = String::new();
+
+    if hours > 0 {
+        result.push_str(&format!("{:02}:", hours));
+    }
+
+    result.push_str(&format!("{:02}:", minutes));
+    result.push_str(&format!("{:02}.", seconds));
+    result.push_str(&format!("{:06}", milliseconds)); // 6 digits, zero-padded
+
+    result
+}
+
 pub struct InputFile {
     child: Child,
     reader: BufReader<ChildStdout>,
 }
 
 impl InputFile {
-    pub fn new(file_path: String, seek_ms: u64) -> InputFile {
+    pub fn new(file_path: PathBuf, seek_ms: u64) -> InputFile {
         let mut child = Command::new("ffmpeg")
             .args(&[
                 "-i",
-                &file_path,
+                &file_path.to_str().unwrap(),
+                "-ss",
+                &ffmeg_seek_time_arg_format(seek_ms),
                 "-f",
                 "s16le",
                 "-ac",
