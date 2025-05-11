@@ -521,9 +521,9 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
-version = "0.2.170"
+version = "0.2.172"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
+checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
 
 [[package]]
 name = "linux-raw-sys"
@@ -1121,6 +1121,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "super-duper-radio"
+version = "1.0.0"
+dependencies = [
+ "bytes",
+ "frand",
+ "libc",
+ "rocket",
+ "serde",
+ "serde_json",
+ "tokio",
+ "winapi",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1410,19 +1424,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26816d2e1a4a36a2940b96c5296ce403917633dff8f3440e9b236ed6f6bacad2"
 dependencies = [
  "wit-bindgen-rt",
-]
-
-[[package]]
-name = "web-radio"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "frand",
- "rocket",
- "serde",
- "serde_json",
- "tokio",
- "winapi",
 ]
 
 [[package]]

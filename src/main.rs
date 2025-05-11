@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::{collections::HashMap, env, path::Path};
 
 use bytes::Bytes;
@@ -98,7 +100,14 @@ fn rocket() -> _ {
         stations.insert(station_id.to_owned(), cytoplasm);
     }
 
-    rocket::build()
+    let address = env::var("ROCKET_ADDRESS").unwrap_or("127.0.0.1".to_string());
+
+    let config = rocket::Config {
+        address: IpAddr::from_str(&address).unwrap(),
+        ..rocket::Config::debug_default()
+    };
+
+    rocket::custom(&config)
         .manage(stations)
         .mount(
             "/",

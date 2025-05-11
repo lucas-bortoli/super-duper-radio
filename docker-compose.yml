@@ -1,0 +1,8 @@
+services:
+  super-duper-radio:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./stations:/app/stations
+    stop_grace_period: 1s

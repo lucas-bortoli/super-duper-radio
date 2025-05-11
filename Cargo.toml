@@ -1,6 +1,6 @@
 [package]
-name = "web-radio"
-version = "0.1.0"
+name = "super-duper-radio"
+version = "1.0.0"
 edition = "2021"
 
 [dependencies]
@@ -11,3 +11,4 @@ serde_json = "1.0.140"
 tokio = "1.44.2"
 frand = "0.10.1"
 winapi = { version = "0.3.9", features = ["processthreadsapi", "winbase"] }
+libc = "0.2.172"
