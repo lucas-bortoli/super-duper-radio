@@ -13,6 +13,7 @@ use track::track::StationManifest;
 
 pub mod cytoplasm;
 pub mod id_gen;
+mod process_priority;
 pub mod track;
 
 #[macro_use]
@@ -77,6 +78,8 @@ fn station_event_endpoint(state: &rocket::State<StationMap>) -> EventStream![] {
 
 #[launch]
 fn rocket() -> _ {
+    process_priority::set_high_priority();
+
     let mut stations: StationMap = HashMap::new();
 
     for station_id in vec!["RadioZero"] {
