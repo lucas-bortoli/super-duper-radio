@@ -117,7 +117,13 @@ impl Cytoplasm {
 
             match current_state {
                 State::SwitchTrack => continue, // estação ainda está inicializando, ignorar
-                State::NarrationBefore { related_track: _ } => todo!(),
+                State::NarrationBefore {
+                    track: _,
+                    narration,
+                } => {
+                    let file = InputFile::new(narration.file_info.location, 0);
+                    play_audio_blocking(file, buffer.clone());
+                }
                 State::Track { track } => {
                     metadata_stream.push(Metadata::TrackChange {
                         title: track.title,
@@ -127,7 +133,13 @@ impl Cytoplasm {
                     let file = InputFile::new(track.file_info.location, 0);
                     play_audio_blocking(file, buffer.clone());
                 }
-                State::NarrationAfter { related_track: _ } => todo!(),
+                State::NarrationAfter {
+                    track: _,
+                    narration,
+                } => {
+                    let file = InputFile::new(narration.file_info.location, 0);
+                    play_audio_blocking(file, buffer.clone());
+                }
             }
         });
     }

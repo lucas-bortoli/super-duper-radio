@@ -1,4 +1,7 @@
-use crate::track::{track::Track, track_iterator::TrackIterator};
+use crate::track::{
+    track::{Narration, Track},
+    track_iterator::TrackIterator,
+};
 use frand::Rand;
 use std::{
     fmt::Display,
@@ -10,25 +13,39 @@ use tokio::sync::oneshot;
 #[derive(Clone, Debug)]
 pub enum State {
     SwitchTrack,
-    NarrationBefore { related_track: Track },
+    NarrationBefore { narration: Narration, track: Track },
     Track { track: Track },
-    NarrationAfter { related_track: Track },
+    NarrationAfter { narration: Narration, track: Track },
 }
 
 impl Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             State::SwitchTrack => write!(f, "SwitchTrack"),
-            State::NarrationBefore { related_track: _ } => write!(f, "NarrationBefore"),
+            State::NarrationBefore {
+                narration,
+                track: _,
+            } => write!(
+                f,
+                "NarrationBefore[\"{}\", {} ms]",
+                narration.transcript, narration.file_info.audio_milliseconds,
+            ),
             State::Track { track } => write!(f, "Track[{}]", track.title),
-            State::NarrationAfter { related_track: _ } => write!(f, "NarrationAfter"),
+            State::NarrationAfter {
+                narration,
+                track: _,
+            } => write!(
+                f,
+                "NarrationAfter[\"{}\", {} ms]",
+                narration.transcript, narration.file_info.audio_milliseconds,
+            ),
         }
     }
 }
 
 pub struct StateManager {
+    pub current_state: Arc<RwLock<State>>,
     cancel_signal_tx: Option<oneshot::Sender<()>>,
-    current_state: Arc<RwLock<State>>,
 }
 
 impl StateManager {
@@ -49,15 +66,33 @@ impl StateManager {
                     break;
                 }
 
-                let next_state = match *current_state_thread.read().unwrap() {
+                let next_state = match current_state_thread.read().unwrap().clone() {
                     State::SwitchTrack => {
                         let track = iterator.next(&mut rng).unwrap();
+                        let narration = pick_random_narration(&track.narration_before, &mut rng);
 
-                        State::Track { track }
+                        if let Some(narration) = narration {
+                            State::NarrationBefore { narration, track }
+                        } else {
+                            State::Track { track }
+                        }
                     }
-                    State::NarrationBefore { related_track: _ } => todo!(),
-                    State::Track { track: _ } => State::SwitchTrack,
-                    State::NarrationAfter { related_track: _ } => todo!(),
+                    State::NarrationBefore {
+                        narration: _,
+                        track,
+                    } => State::Track { track },
+                    State::Track { track } => {
+                        let narration = pick_random_narration(&track.narration_after, &mut rng);
+                        if let Some(narration) = narration {
+                            State::NarrationAfter { narration, track }
+                        } else {
+                            State::SwitchTrack
+                        }
+                    }
+                    State::NarrationAfter {
+                        narration: _,
+                        track: _,
+                    } => State::SwitchTrack,
                 };
 
                 *current_state_thread.write().unwrap() = next_state.clone();
@@ -84,5 +119,14 @@ impl Drop for StateManager {
         if let Some(tx) = self.cancel_signal_tx.take() {
             let _ = tx.send(());
         }
+    }
+}
+
+fn pick_random_narration(pool: &Vec<Narration>, rng: &mut Rand) -> Option<Narration> {
+    if pool.len() == 0 {
+        return None;
+    } else {
+        let idx = rng.gen_range(0..pool.len() as u64) as usize;
+        Some(pool.get(idx).unwrap().clone())
     }
 }

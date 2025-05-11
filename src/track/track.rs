@@ -56,6 +56,35 @@ impl StationManifest {
             });
 
             track.file_info = file_info;
+            track.album_art = base_dir
+                .join(track.album_art.clone())
+                .to_str()
+                .unwrap()
+                .to_string();
+
+            for narration in track.narration_before.iter_mut() {
+                let narr_source = base_dir.join(narration.source.clone());
+                let narr_info = audio_file_info::query(narr_source).unwrap_or_else(|_| {
+                    panic!(
+                        "Erro ao extrair informações do arquivo da narração: {:#?}",
+                        narration
+                    )
+                });
+
+                narration.file_info = narr_info;
+            }
+
+            for narration in track.narration_after.iter_mut() {
+                let narr_source = base_dir.join(narration.source.clone());
+                let narr_info = audio_file_info::query(narr_source).unwrap_or_else(|_| {
+                    panic!(
+                        "Erro ao extrair informações do arquivo da narração: {:#?}",
+                        narration
+                    )
+                });
+
+                narration.file_info = narr_info;
+            }
 
             println!("Carregado informações para a track: {:#?}", track);
         }

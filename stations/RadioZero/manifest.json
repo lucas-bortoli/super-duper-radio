@@ -1,103 +1,423 @@
 {
   "title": "Super Duper Radio",
   "description": "Seleção das músicas mais felizes e quase completamente instrumental da época. Principalmente música de produção da Europa Ocidental.",
-  "seed": 1000,
+  "seed": 1001,
   "tracks": [
     {
       "title": "Hotsy-Totsy",
       "artist": "Heinz Kiessling",
       "source": "hotsy_totsy.mp3",
-      "album_art": "hotsy_totsy.jpg"
+      "album_art": "hotsy_totsy.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/1.mp3",
+          "transcript": "I was thinking today about how to find happiness in a world that feels so gray and heavy at times. Maybe it's something simple, like a good song that makes you smile. So I found this one from Heinz Kiessling, and it really is the kind of track that makes me feel like I'm dancing in a sunflower field with no worries in the world."
+        },
+        {
+          "source": "narrations/2.mp3",
+          "transcript": "This track is so upbeat, so positive, and I can't help but think that even in the darkest of times, there's something about this music that just lifts your spirit. It's like a ray of sunshine breaking through the clouds."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/3.mp3",
+          "transcript": "And that's it for Heinz Kiessling's 'Hotsy-Totsy.' I hope it brought a smile to your face and a little bit of light into your day. Remember, even on the cloudiest days, there's always a way to find your own sun."
+        },
+        {
+          "source": "narrations/4.mp3",
+          "transcript": "If you're ever feeling down, give this track a listen. Let it carry you through the tough times and remind you that there's joy to be found in the simplest of things. Because life is too short for anything less than happiness."
+        }
+      ]
     },
     {
       "title": "Bargains Galore",
       "artist": "Dennis Berry & Stuart Crombie",
       "source": "bargains_galore.mp3",
-      "album_art": "bargains_galore.jpg"
+      "album_art": "bargains_galore.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/5.mp3",
+          "transcript": "Now, I want to take you back to a time when the world was full of promise and possibility. This next track, 'Bargains Galore' by Dennis Berry & Stuart Crombie, is all about the thrill of finding something wonderful at a great price. It's like that feeling when you find a hidden gem in a thrift store or a bargain bin."
+        },
+        {
+          "source": "narrations/6.mp3",
+          "transcript": "The beat is infectious, the melody is catchy, and it's impossible not to feel like you're dancing with joy as you listen. This track is a reminder that happiness is often found in the unexpected places."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/7.mp3",
+          "transcript": "And with that, we come to the end of 'Bargains Galore.'."
+        },
+        {
+          "source": "narrations/8.mp3",
+          "transcript": "I hope you enjoyed this little piece of musical magic."
+        }
+      ]
     },
     {
       "title": "Pink Deville",
       "artist": "Paul Rothman",
       "source": "pink_deville.mp3",
-      "album_art": "generic.jpg"
+      "album_art": "generic.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/9.mp3",
+          "transcript": "Next up is 'Pink Deville' by Paul Rothman. Uh, okay, this one is a bit mysterious. There's a soft, dreamy vibe that makes me think of a late-night drive with the radio on and the stars above you. Let's hear it."
+        },
+        {
+          "source": "narrations/10.mp3",
+          "transcript": "Paul Rothman, fellas. 'Pink Deville'."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/11.mp3",
+          "transcript": "So that's 'Pink Deville.' I'm not sure if I'm still in love with this track, but I'll definitely give it a second listen soon."
+        },
+        {
+          "source": "narrations/12.mp3",
+          "transcript": "I think I'm in love with the spacey vibe and the way it just kind of carries you away. But I'm not sure if that's a good thing or a bad thing."
+        }
+      ]
     },
     {
       "title": "Brazil (Aquarela do Brasil)",
       "artist": "Antonio Carlos Jobim",
       "source": "aquarela_do_brasil.mp3",
-      "album_art": "aquarela_do_brasil.jpg"
+      "album_art": "aquarela_do_brasil.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/13.mp3",
+          "transcript": "Ah, the next track is 'Brazil' by Antonio Carlos Jobim, more commonly known as 'Aquarela do Brasil.' I think this is one of those songs that just needs to be listened to with your eyes closed. Let the music wash over you. Bossa nova, right? So smooth and elegant."
+        },
+        {
+          "source": "narrations/14.mp3",
+          "transcript": "If you close your eyes, you can imagine the sun setting over the ocean, the gentle breeze, the sound of waves, and the music of Brazil. A moment of serenity."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/15.mp3",
+          "transcript": "That was 'Aquarela do Brasil' by Antonio Carlos Jobim. I'm pretty sure you could fall asleep to that track."
+        },
+        {
+          "source": "narrations/16.mp3",
+          "transcript": "And I would have no problem falling asleep to it either. I think I'd even be able to dream in Portuguese."
+        }
+      ]
     },
     {
       "title": "Cha Cha Nova",
       "artist": "NDR Big Band",
       "source": "cha_cha_nova.mp3",
-      "album_art": "cha_cha_nova.jpg"
+      "album_art": "cha_cha_nova.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/17.mp3",
+          "transcript": "Alright, we've got another one here. This is 'Cha Cha Nova' by NDR Big Band. If you've never heard of NDR Big Band, let me tell you, they are the masters of the cha-cha, and this track is pure joy."
+        },
+        {
+          "source": "narrations/18.mp3",
+          "transcript": "The rhythm is infectious, the melody is bouncy, and if you don't feel like dancing, I don't know what to say to you. This track is guaranteed to put a smile on your face."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/19.mp3",
+          "transcript": "That's 'Cha Cha Nova' by NDR Big Band. Let me tell you, that was one hell of a track."
+        },
+        {
+          "source": "narrations/20.mp3",
+          "transcript": "If I had any more energy left, I'd be dancing in my chair right now. But I guess I'll just sit here and smile instead."
+        }
+      ]
     },
     {
       "title": "Clique Chic",
       "artist": "Jo Part & Christian Mondstein",
       "source": "clique_chic.mp3",
-      "album_art": "generic.jpg"
+      "album_art": "generic.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/21.mp3",
+          "transcript": "Now, this next track, 'Clique Chic' by Jo Part & Christian Mondstein, is all about being cool, stylish, and having fun. It's like the soundtrack to a summer evening, with friends, good food, and the kind of vibe that just makes you want to stay out all night."
+        },
+        {
+          "source": "narrations/22.mp3",
+          "transcript": "The rhythm is smooth, the melody is catchy, and it's the kind of track that just makes you want to move, even if you're not sure how."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/23.mp3",
+          "transcript": "And that's 'Clique Chic.' I hope it was the kind of track that made you want to dance, even if you're stuck in your chair."
+        },
+        {
+          "source": "narrations/24.mp3",
+          "transcript": "Remember, even if you're not moving, you're still having fun."
+        }
+      ]
     },
     {
       "title": "Daisy Bird",
       "artist": "Roger John Webb & Barbara Moore",
       "source": "daisy_bird.mp3",
-      "album_art": "daisy_bird.jpg"
+      "album_art": "daisy_bird.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/25.mp3",
+          "transcript": "Alright, next up is 'Daisy Bird' by Roger John Webb & Barbara Moore. This is another one of those tracks that just makes me think of summer, of warm breezes, and the kind of happiness that comes with being outside, with the sun on your face and the music playing in the background."
+        },
+        {
+          "source": "narrations/26.mp3",
+          "transcript": "It's got that kind of upbeat, carefree vibe that just makes me want to laugh and dance and feel absolutely amazing. And I think that's exactly what this track is for."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/27.mp3",
+          "transcript": "That was 'Daisy Bird' by Roger John Webb & Barbara Moore. I hope you enjoyed it as much as I did."
+        },
+        {
+          "source": "narrations/28.mp3",
+          "transcript": "I can't wait to hear more from them. And I think I'll be adding this one to my playlist for sure."
+        }
+      ]
     },
     {
       "title": "Dancing On the Avenue",
       "artist": "Desconhecido",
       "source": "dancing_on_the_avenue.mp3",
-      "album_art": "generic.jpg"
+      "album_art": "generic.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/29.mp3",
+          "transcript": "Next, we've got 'Dancing On the Avenue'. Funny thing: I don't know who the artist is here, because the sticker on the album is covered in grime."
+        },
+        {
+          "source": "narrations/30.mp3",
+          "transcript": "This is a bit of a mystery, but I can't help but think that it's one of those tracks that's just supposed to be enjoyed without knowing the artist. The melody is bouncy, the rhythm is infectious, and it's got that kind of joy that makes you want to dance even when you're just sitting there."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/31.mp3",
+          "transcript": "So that's 'Dancing On the Avenue' by this mysterious artist that I can't seem to figure out. But I think that's okay. Sometimes the music is more important than the name on the label."
+        },
+        {
+          "source": "narrations/32.mp3",
+          "transcript": "I hope you enjoyed it as much as I did. And if you happen to know who the artist is, give me a call."
+        }
+      ]
     },
     {
       "title": "Flirtation Waltz",
       "artist": "Frank Chacksfield Orchestra",
       "source": "flirtation_waltz.mp3",
-      "album_art": "flirtation_waltz.jpg"
+      "album_art": "flirtation_waltz.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/33.mp3",
+          "transcript": "Alright, let's dance a little. Next up is 'Flirtation Waltz' by Frank Chacksfield Orchestra. Try not to smile, but I don't know if that's even possible."
+        },
+        {
+          "source": "narrations/34.mp3",
+          "transcript": "It's got that kind of old-timey charm, with a gentle sway and a melody that's as smooth as silk. I think it's the kind of track that would be perfect for a first date or just a night out with friends."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/35.mp3",
+          "transcript": "That was 'Flirtation Waltz' by Frank Chacksfield Orchestra. I think I might have just fallen in love with this track."
+        },
+        {
+          "source": "narrations/36.mp3",
+          "transcript": "If you're looking for a track that's going to make you feel like you're dancing with someone you really like, this one is for you."
+        }
+      ]
     },
     {
       "title": "Gay Spirits",
       "artist": "David Rose and His Orchestra",
       "source": "gay_spirits.mp3",
-      "album_art": "gay_spirits.jpg"
+      "album_art": "gay_spirits.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/37.mp3",
+          "transcript": "Next, we've got 'Gay Spirits' by David Rose and His Orchestra. The title alone is enough to get you smiling. 'Gay Spirits,' that is."
+        },
+        {
+          "source": "narrations/38.mp3",
+          "transcript": "The music is bright and cheerful, the kind of track that makes you feel like everything is going to be okay and that you're going to have a great time, no matter what."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/39.mp3",
+          "transcript": "So that was 'Gay Spirits' by David Rose and His Orchestra. If you're looking for a track that's going to put you in a good mood, this one is a sure bet."
+        },
+        {
+          "source": "narrations/40.mp3",
+          "transcript": "'Gay Spirits'. A name I still find very amusing."
+        }
+      ]
     },
     {
       "title": "Gay Time",
       "artist": "Alan Perry",
       "source": "gay_time.mp3",
-      "album_art": "gay_time.jpg"
+      "album_art": "gay_time.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/41.mp3",
+          "transcript": "Alright, next track is 'Gay Time' by Alan Perry. Another track with a title that's just begging to be laughed at."
+        },
+        {
+          "source": "narrations/42.mp3",
+          "transcript": "But the music is just as bright and cheerful as the last one. It's got that kind of playful energy that just makes you want to move your feet and maybe even sing along."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/43.mp3",
+          "transcript": "That was 'Gay Time' by Alan Perry. I hope you had a good laugh at the title and enjoyed the music just as much."
+        },
+        {
+          "source": "narrations/44.mp3",
+          "transcript": "Alan Perry, folks."
+        }
+      ]
     },
     {
       "title": "Glitterati Party",
       "artist": "Werner Tautz",
       "source": "glitterati_party.mp3",
-      "album_art": "glitterati_party.jpg"
+      "album_art": "glitterati_party.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/45.mp3",
+          "transcript": "Funny story about this next one: I found this record in the back of a dusty old shop, and the label was so faded that I had to guess the artist. But once I heard 'Glitterati Party' by Werner Tautz, I was instantly hooked."
+        },
+        {
+          "source": "narrations/46.mp3",
+          "transcript": "When I  first heard this track, I thought it was going to be all about glitter and parties, and I was not wrong. This is the kind of music that makes you want to throw on your fanciest outfit and dance the night away. Here's 'Glitterati Party' by Werner Tautz."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/47.mp3",
+          "transcript": "That was 'Glitterati Party' by Werner Tautz. I think it's safe to say I'm going to be listening to that one again soon."
+        },
+        {
+          "source": "narrations/48.mp3",
+          "transcript": "And I think I might just have to get that record again."
+        }
+      ]
     },
     {
       "title": "Glow Worm Cha Cha Cha",
       "artist": "Jackie Davis",
       "source": "glow_worm_cha_cha_cha.mp3",
-      "album_art": "glow_worm_cha_cha_cha.jpg"
+      "album_art": "glow_worm_cha_cha_cha.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/49.mp3",
+          "transcript": "Alright, next up is 'Glow Worm Cha Cha Cha' by Jackie Davis. Now, I've never heard of Jackie Davis before, but I can tell you that this is the kind of track that is going to be a favorite of mine from now on."
+        },
+        {
+          "source": "narrations/50.mp3",
+          "transcript": "The cha-cha rhythm is smooth and easy to follow, and the melody is catchy enough to make you want to dance even if you're not sure how to. So here's 'Glow Worm Cha Cha Cha' by Jackie Davis."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/51.mp3",
+          "transcript": "That was 'Glow Worm Cha Cha Cha' by Jackie Davis. I'm already looking forward to hearing more from them."
+        },
+        {
+          "source": "narrations/52.mp3",
+          "transcript": "And I think I'm going to have to write down their name somewhere, just in case I forget."
+        }
+      ]
     },
     {
       "title": "Hackney Carriage",
       "artist": "Cedric King-Palmer",
       "source": "hackney_carriage.mp3",
-      "album_art": "hackney_carriage.jpg"
+      "album_art": "hackney_carriage.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/53.mp3",
+          "transcript": "Next up, we've got 'Hackney Carriage' by Cedric King-Palmer. Alright, I didn't know this artist before, but this is a very different and very cool sounding track."
+        },
+        {
+          "source": "narrations/54.mp3",
+          "transcript": "Last year, I remember reading somewhere that 'Hackney Carriage' was once a hit. I had no idea that Cedric King-Palmer was the artist. But now that I've heard it, I think I'm going to go out and find more of his music."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/55.mp3",
+          "transcript": "So that's 'Hackney Carriage' by Cedric King-Palmer. If you're into the more quirky side of jazz and swing, this one is definitely for you."
+        },
+        {
+          "source": "narrations/56.mp3",
+          "transcript": "I think this one's going to stay in my playlist for a long time."
+        }
+      ]
     },
     {
       "title": "Happy-Go-Lively",
       "artist": "Laurie Johnson",
       "source": "happy_go_lively.mp3",
-      "album_art": "happy_go_lively.jpg"
+      "album_art": "happy_go_lively.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/57.mp3",
+          "transcript": "Now, 'Happy-Go-Lively' by Laurie Johnson. Another name that I've heard of but never actually listened to. Now that I have, I can't say I'm not glad."
+        },
+        {
+          "source": "narrations/58.mp3",
+          "transcript": "A very upbeat track with a melody that just makes you want to dance and not care about anything else. So, without further ado, here's 'Happy-Go-Lively' by Laurie Johnson."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/59.mp3",
+          "transcript": "That was 'Happy-Go-Lively' by Laurie Johnson. A track that I will absolutely be listening to again."
+        },
+        {
+          "source": "narrations/60.mp3",
+          "transcript": "This one might have to make my list of top favorites for the next few days."
+        }
+      ]
     },
     {
       "title": "Temptation Sensation",
       "artist": "Heinz Kiessling",
       "source": "temptation_sensation.mp3",
-      "album_art": "temptation_sensation.jpg"
+      "album_art": "temptation_sensation.jpg",
+      "narration_before": [
+        {
+          "source": "narrations/61.mp3",
+          "transcript": "And we're back to Heinz Kiessling with 'Temptation Sensation.' Again, this track is the kind that just makes you feel good and happy and ready to take on the world."
+        },
+        {
+          "source": "narrations/62.mp3",
+          "transcript": "Any of you ever watched that show that takes place in Philadelphia? With the guys who work in a bar? What was the name of that show again? Anyway, 'Temptation Sensation' makes me think of that."
+        }
+      ],
+      "narration_after": [
+        {
+          "source": "narrations/63.mp3",
+          "transcript": "So that was 'Temptation Sensation' by Heinz Kiessling. A track that, much like 'Hotsy-Totsy,' is pure joy."
+        },
+        {
+          "source": "narrations/64.mp3",
+          "transcript": "Heinz Kiessling, folks."
+        }
+      ]
     }
-  ]  
+  ]
 }
