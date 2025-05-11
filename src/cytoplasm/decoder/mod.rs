@@ -2,6 +2,7 @@ use std::{
     io::{BufReader, Read},
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
+    time::Duration,
 };
 
 use bytes::Bytes;
@@ -22,6 +23,27 @@ pub struct AudioPacket {
      * O buffer de áudio, formato PCM, com as especificações acima.
      */
     pub buffer: Bytes,
+}
+
+impl AudioPacket {
+    /// Cria um novo `AudioPacket` contendo som silencioso (zeros) de um determinado comprimento.
+    ///
+    /// ```rust
+    /// let silence_packet = AudioPacket::from_silence(Duration::from_secs(2)); // 2 segundos de silêncio
+    /// ```
+    pub fn from_silence(duration: Duration) -> AudioPacket {
+        let duration_seconds = duration.as_secs() as f64 + duration.subsec_nanos() as f64 / 1e9;
+        let sample_count = (duration_seconds * SAMPLE_RATE as f64) as u32;
+        let byte_count = sample_count * CHANNEL_COUNT * BYTE_DEPTH;
+
+        // cria um buffer de zeros (silêncio)
+        let buffer = vec![0u8; byte_count as usize];
+
+        AudioPacket {
+            audio_length: duration_seconds,
+            buffer: Bytes::from(buffer),
+        }
+    }
 }
 
 /// Converte um número de milissegundos em uma string de tempo formatada compatível com o parâmetro `-ss` do FFmpeg.

@@ -13,9 +13,21 @@ use tokio::sync::oneshot;
 #[derive(Clone, Debug)]
 pub enum State {
     SwitchTrack,
-    NarrationBefore { narration: Narration, track: Track },
-    Track { track: Track },
-    NarrationAfter { narration: Narration, track: Track },
+    NarrationBefore {
+        narration: Narration,
+        track: Track,
+    },
+    Track {
+        track: Track,
+    },
+    NarrationAfter {
+        narration: Narration,
+        track: Track,
+    },
+    IntentionalDelay {
+        duration_units: u8,
+        next_state: Box<State>,
+    },
 }
 
 impl Display for State {
@@ -38,6 +50,14 @@ impl Display for State {
                 f,
                 "NarrationAfter[\"{}\", {} ms]",
                 narration.transcript, narration.file_info.audio_milliseconds,
+            ),
+            State::IntentionalDelay {
+                duration_units,
+                next_state,
+            } => write!(
+                f,
+                "IntentionalDelay[{} units, {}]",
+                duration_units, next_state,
             ),
         }
     }
@@ -72,19 +92,31 @@ impl StateManager {
                         let narration = pick_random_narration(&track.narration_before, &mut rng);
 
                         if let Some(narration) = narration {
-                            State::NarrationBefore { narration, track }
+                            State::IntentionalDelay {
+                                duration_units: 4,
+                                next_state: Box::new(State::NarrationBefore { narration, track }),
+                            }
                         } else {
-                            State::Track { track }
+                            State::IntentionalDelay {
+                                duration_units: 2,
+                                next_state: Box::new(State::Track { track }),
+                            }
                         }
                     }
                     State::NarrationBefore {
                         narration: _,
                         track,
-                    } => State::Track { track },
+                    } => State::IntentionalDelay {
+                        duration_units: 2,
+                        next_state: Box::new(State::Track { track }),
+                    },
                     State::Track { track } => {
                         let narration = pick_random_narration(&track.narration_after, &mut rng);
                         if let Some(narration) = narration {
-                            State::NarrationAfter { narration, track }
+                            State::IntentionalDelay {
+                                duration_units: 4,
+                                next_state: Box::new(State::NarrationAfter { narration, track }),
+                            }
                         } else {
                             State::SwitchTrack
                         }
@@ -93,6 +125,10 @@ impl StateManager {
                         narration: _,
                         track: _,
                     } => State::SwitchTrack,
+                    State::IntentionalDelay {
+                        duration_units: _,
+                        next_state,
+                    } => *next_state,
                 };
 
                 *current_state_thread.write().unwrap() = next_state.clone();

@@ -106,6 +106,23 @@ impl Cytoplasm {
                 }
             }
 
+            fn play_silence(units: u8, buffer: Arc<Mutex<VecDeque<AudioPacket>>>) {
+                let silence_unit: AudioPacket =
+                    AudioPacket::from_silence(Duration::from_millis(500));
+                for _ in 0..units {
+                    let mut buf = buffer.lock().unwrap();
+                    if buf.len() >= SETPOINT_HIGH {
+                        drop(buf);
+                        while buffer.lock().unwrap().len() > SETPOINT_LOW {
+                            thread::sleep(BACKPRESSURE_DELAY);
+                        }
+                        buffer.lock().unwrap().push_back(silence_unit.clone());
+                    } else {
+                        buf.push_back(silence_unit.clone());
+                    }
+                }
+            }
+
             let current_state = state_rx.recv();
             if let Err(err) = current_state {
                 eprintln!("cytoplasm/d: o canal de state fechou: {}", err);
@@ -139,6 +156,12 @@ impl Cytoplasm {
                 } => {
                     let file = InputFile::new(narration.file_info.location, 0);
                     play_audio_blocking(file, buffer.clone());
+                }
+                State::IntentionalDelay {
+                    duration_units,
+                    next_state: _,
+                } => {
+                    play_silence(duration_units, buffer.clone());
                 }
             }
         });
