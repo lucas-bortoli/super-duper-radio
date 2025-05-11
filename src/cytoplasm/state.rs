@@ -2,8 +2,10 @@ use crate::track::{track::Track, track_iterator::TrackIterator};
 use frand::Rand;
 use std::{
     fmt::Display,
-    time::{SystemTime, UNIX_EPOCH},
+    sync::{mpsc, Arc, RwLock},
+    thread,
 };
+use tokio::sync::oneshot;
 
 #[derive(Clone, Debug)]
 pub enum State {
@@ -13,66 +15,6 @@ pub enum State {
     NarrationAfter { related_track: Track },
 }
 
-impl State {
-    pub fn name(&self) -> &'static str {
-        match self {
-            State::SwitchTrack => "SwitchTrack",
-            State::NarrationBefore { related_track: _ } => "NarrationBefore",
-            State::Track { track: _ } => "Track",
-            State::NarrationAfter { related_track: _ } => "NarrationAfter",
-        }
-    }
-
-    pub fn determine_expected_state(tracks: Vec<Track>, seed: u64) -> (State, u64) {
-        assert!(tracks.len() != 0, "track list is empty");
-
-        const STATION_EPOCH: u64 = 1746794077052; // millis
-        let current_time_unix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as u64;
-
-        let mut rng = Rand::with_seed(seed);
-        let mut current_state = State::SwitchTrack;
-        let mut elapsed = current_time_unix.saturating_sub(STATION_EPOCH);
-
-        let mut iterator = TrackIterator::new(tracks);
-
-        loop {
-            let current_step_duration = match &current_state {
-                State::SwitchTrack => 0,
-                State::NarrationBefore { related_track: _ } => 0,
-                State::Track { track } => track.file_info.audio_milliseconds,
-                State::NarrationAfter { related_track: _ } => 0,
-            };
-
-            if current_step_duration >= elapsed {
-                // the current step couldn't be run to completion; in this case, "elapsed" means how further in it is in the current state
-                break;
-            }
-
-            elapsed -= current_step_duration;
-
-            current_state = match &current_state {
-                State::SwitchTrack => {
-                    let track = iterator.next(&mut rng).unwrap();
-                    assert!(
-                        track.file_info.audio_milliseconds != 0,
-                        "track {} has zero duration",
-                        track.title
-                    );
-                    State::Track { track }
-                }
-                State::NarrationBefore { related_track: _ } => todo!(),
-                State::Track { track: _ } => State::SwitchTrack,
-                State::NarrationAfter { related_track: _ } => todo!(),
-            };
-        }
-
-        (current_state, elapsed)
-    }
-}
-
 impl Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -80,6 +22,67 @@ impl Display for State {
             State::NarrationBefore { related_track: _ } => write!(f, "NarrationBefore"),
             State::Track { track } => write!(f, "Track[{}]", track.title),
             State::NarrationAfter { related_track: _ } => write!(f, "NarrationAfter"),
+        }
+    }
+}
+
+pub struct StateManager {
+    cancel_signal_tx: Option<oneshot::Sender<()>>,
+    current_state: Arc<RwLock<State>>,
+}
+
+impl StateManager {
+    pub fn new(tracks: Vec<Track>, seed: u64) -> (StateManager, mpsc::Receiver<State>) {
+        let (cancel_tx, mut cancel_rx) = oneshot::channel::<()>();
+        let (state_tx, state_rx) = mpsc::sync_channel(0);
+
+        let current_state = Arc::new(RwLock::new(State::SwitchTrack));
+
+        let current_state_thread = current_state.clone();
+        thread::spawn(move || {
+            let mut iterator = TrackIterator::new(tracks);
+            let mut rng = Rand::with_seed(seed);
+
+            loop {
+                if let Ok(_) = cancel_rx.try_recv() {
+                    eprintln!("state_manager: stop signal received");
+                    break;
+                }
+
+                let next_state = match *current_state_thread.read().unwrap() {
+                    State::SwitchTrack => {
+                        let track = iterator.next(&mut rng).unwrap();
+
+                        State::Track { track }
+                    }
+                    State::NarrationBefore { related_track: _ } => todo!(),
+                    State::Track { track: _ } => State::SwitchTrack,
+                    State::NarrationAfter { related_track: _ } => todo!(),
+                };
+
+                *current_state_thread.write().unwrap() = next_state.clone();
+
+                // notify that the state changed, then block until the receiver acknowleges
+                if let Err(err) = state_tx.send(next_state.clone()) {
+                    eprintln!("state_manager: state send error: {}", err);
+                    break;
+                }
+            }
+        });
+
+        let manager = StateManager {
+            cancel_signal_tx: Some(cancel_tx),
+            current_state,
+        };
+
+        (manager, state_rx)
+    }
+}
+
+impl Drop for StateManager {
+    fn drop(&mut self) {
+        if let Some(tx) = self.cancel_signal_tx.take() {
+            let _ = tx.send(());
         }
     }
 }

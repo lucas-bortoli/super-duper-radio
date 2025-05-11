@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{Arc, Mutex},
+    sync::{mpsc, Arc, Mutex},
     thread::{self},
     time::{Duration, Instant},
 };
@@ -11,7 +11,7 @@ use output_stream::{
     audio_stream::AudioStream,
     metadata_stream::{Metadata, MetadataStream},
 };
-use state::State;
+use state::{State, StateManager};
 
 use crate::track::track::StationManifest;
 
@@ -26,6 +26,7 @@ const SETPOINT_LOW: usize = 10;
 
 pub struct Cytoplasm {
     pub manifest: StationManifest,
+    pub state_manager: StateManager,
     pub encoders: Arc<Mutex<HashMap<OutputCodec, AudioEncoder>>>,
     pub output_streams: Arc<HashMap<OutputCodec, Arc<AudioStream>>>,
     pub output_metadata_stream: Arc<MetadataStream>,
@@ -33,16 +34,13 @@ pub struct Cytoplasm {
 
 impl Cytoplasm {
     pub fn new(manifest: StationManifest, output_codecs: &[OutputCodec]) -> Cytoplasm {
+        let (state_manager, state_rx) = StateManager::new(manifest.tracks.clone(), manifest.seed);
         let buffer = Arc::new(Mutex::new(VecDeque::<AudioPacket>::new()));
         let output_streams = Self::init_output_streams(&output_codecs);
         let output_metadata_stream = Arc::new(MetadataStream::new());
         let encoders = Self::init_encoders(&output_codecs, &output_streams);
 
-        Self::init_decoder_thread(
-            manifest.clone(),
-            buffer.clone(),
-            output_metadata_stream.clone(),
-        );
+        Self::init_decoder_thread(state_rx, buffer.clone(), output_metadata_stream.clone());
         Self::init_encoder_thread(encoders.clone(), buffer.clone());
 
         let output_streams_arc = Arc::new(output_streams);
@@ -51,6 +49,7 @@ impl Cytoplasm {
 
         return Cytoplasm {
             manifest,
+            state_manager,
             output_streams: output_streams_arc,
             output_metadata_stream,
             encoders,
@@ -85,7 +84,7 @@ impl Cytoplasm {
     /// inicia a thread responsável por decodificar arquivos de áudio
     /// ela carrega trilhas conforme recebidas e enfileira pacotes no buffer compartilhado
     fn init_decoder_thread(
-        manifest: StationManifest,
+        state_rx: mpsc::Receiver<State>,
         buffer: Arc<Mutex<VecDeque<AudioPacket>>>,
         metadata_stream: Arc<MetadataStream>,
     ) {
@@ -107,10 +106,14 @@ impl Cytoplasm {
                 }
             }
 
-            let (current_state, elapsed) =
-                State::determine_expected_state(manifest.tracks.clone(), manifest.seed);
+            let current_state = state_rx.recv();
+            if let Err(err) = current_state {
+                eprintln!("cytoplasm/d: o canal de state fechou: {}", err);
+                break;
+            }
 
-            eprintln!("cytoplasm/d: current state: {}", current_state);
+            let current_state = current_state.unwrap();
+            eprintln!("cytoplasm/d: estado atual: {}", current_state);
 
             match current_state {
                 State::SwitchTrack => continue, // estação ainda está inicializando, ignorar
@@ -121,7 +124,7 @@ impl Cytoplasm {
                         artist: track.artist,
                     });
 
-                    let file = InputFile::new(track.file_info.location, elapsed);
+                    let file = InputFile::new(track.file_info.location, 0);
                     play_audio_blocking(file, buffer.clone());
                 }
                 State::NarrationAfter { related_track: _ } => todo!(),
