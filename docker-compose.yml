@@ -6,3 +6,5 @@ services:
     volumes:
       - ./stations:/app/stations
     stop_grace_period: 1s
+    cap_add:
+      - SYS_NICE
